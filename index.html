@@ -1,14 +1,99 @@
-function loadReels() {
-    db.collection("posts").where("type", "==", "reel").onSnapshot(snap => {
-        let h = "";
-        snap.forEach(doc => {
-            const d = doc.data();
-            h += `
-                <div style="background:black; margin-bottom:10px;">
-                    <video src="${d.url}" style="width:100%; height:80vh; object-fit:cover;" controls autoplay loop muted></video>
-                    <div style="color:white; padding:10px;">@${d.username}</div>
-                </div>`;
-        });
-        document.getElementById('reels-sec').innerHTML = h || "<p style='color:white; text-align:center;'>No Reels yet</p>";
-    });
-}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tanish Gram - Final Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #fafafa; padding-bottom: 70px; }
+        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; font-weight: bold; font-style: italic; font-size: 22px; }
+        .post-card { background: white; border-bottom: 1px solid #dbdbdb; margin-bottom: 15px; }
+        .post-user { padding: 10px; font-weight: 600; font-size: 14px; display: flex; align-items: center; }
+        .post-img, .reel-vid { width: 100%; display: block; background: #000; }
+        .reel-vid { height: 80vh; object-fit: cover; }
+        .footer { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 24px; z-index: 200; }
+        .hidden { display: none; }
+        #search-box { padding: 15px; }
+        input { width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">Instagram <span>⚙️</span></div>
+
+    <div id="feed-div"></div>
+    <div id="reels-div" class="hidden"></div>
+    <div id="search-div" class="hidden" id="search-box">
+        <input type="text" placeholder="Search friends..." oninput="searchNow(this.value)">
+        <div id="res"></div>
+    </div>
+
+    <div class="footer">
+        <span onclick="go('feed')">🏠</span>
+        <span onclick="go('search')">🔍</span>
+        <span onclick="up()">➕</span>
+        <span onclick="go('reels')">🎬</span>
+        <span onclick="location.reload()">👤</span>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
+            authDomain: "my-insta-backend.firebaseapp.com",
+            projectId: "my-insta-backend",
+            storageBucket: "my-insta-backend.firebasestorage.app",
+            messagingSenderId: "955106968523",
+            appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Navigation
+        function go(sec) {
+            document.getElementById('feed-div').classList.add('hidden');
+            document.getElementById('reels-div').classList.add('hidden');
+            document.getElementById('search-div').classList.add('hidden');
+            document.getElementById(sec + '-div').classList.remove('hidden');
+            if(sec === 'feed') loadPosts('photo');
+            if(sec === 'reels') loadPosts('reel');
+        }
+
+        // 2. Load Data (Simplified)
+        function loadPosts(type) {
+            db.collection("posts").onSnapshot(snap => {
+                let html = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(d.type === type) {
+                        if(type === 'photo') {
+                            html += `<div class="post-card"><div class="post-user">@${d.username}</div><img src="${d.url}" class="post-img"></div>`;
+                        } else {
+                            html += `<div class="post-card"><video src="${d.url}" class="reel-vid" controls autoplay loop muted></video><div class="post-user">@${d.username}</div></div>`;
+                        }
+                    }
+                });
+                document.getElementById(type + '-div').innerHTML = html || "<p style='text-align:center; padding:20px;'>Nothing here yet. Post something!</p>";
+            });
+        }
+
+        // 3. Upload
+        function up() {
+            const isReel = confirm("Upload Reel? (Cancel for Photo)");
+            const url = prompt("Paste URL (.jpg or .mp4 link):");
+            if(url) {
+                db.collection("posts").add({
+                    url: url,
+                    type: isReel ? 'reel' : 'photo',
+                    username: "User_" + Math.floor(Math.random()*1000),
+                    time: Date.now()
+                }).then(() => alert("Uploaded!"));
+            }
+        }
+
+        // Initial Load
+        loadPosts('photo');
+    </script>
+</body>
+</html>
