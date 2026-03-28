@@ -222,9 +222,13 @@
 
         // ADMIN & WITHDRAW LOGIC
         function openAdmin() {
-            let p = prompt("Admin Key:");
-            if(p === "tanish123") openScreen('admin-scr');
-        }
+    let p = prompt("Admin Key:");
+    if(p === "tanish123") {
+        openScreen('admin-scr');
+        loadDeposits(); // <-- Ye naya hai, jo requests ko load karega
+    }
+}
+
 
         function updateUserBal() {
             const ph = document.getElementById('adm-ph').value;
