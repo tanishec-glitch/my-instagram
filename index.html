@@ -1,41 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tanish Gram - Final Fix</title>
+    <title>Tanish Gram - Profile Fix</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #fafafa; padding-bottom: 70px; }
-        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; font-weight: bold; font-style: italic; font-size: 22px; }
+        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; font-weight: bold; font-style: italic; font-size: 22px; z-index: 100; }
+        .section { display: none; }
+        .active { display: block; }
         .post-card { background: white; border-bottom: 1px solid #dbdbdb; margin-bottom: 15px; }
-        .post-user { padding: 10px; font-weight: 600; font-size: 14px; display: flex; align-items: center; }
-        .post-img, .reel-vid { width: 100%; display: block; background: #000; }
-        .reel-vid { height: 80vh; object-fit: cover; }
+        .post-user { padding: 10px; font-weight: 600; font-size: 14px; }
+        .post-img, .reel-vid { width: 100%; display: block; }
+        .reel-vid { height: 80vh; object-fit: cover; background: #000; }
+        .profile-header { padding: 20px; text-align: center; border-bottom: 1px solid #dbdbdb; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+        .grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
         .footer { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 24px; z-index: 200; }
-        .hidden { display: none; }
-        #search-box { padding: 15px; }
-        input { width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header">Instagram <span>⚙️</span></div>
+    <div class="header">Instagram</div>
 
-    <div id="feed-div"></div>
-    <div id="reels-div" class="hidden"></div>
-    <div id="search-div" class="hidden" id="search-box">
-        <input type="text" placeholder="Search friends..." oninput="searchNow(this.value)">
-        <div id="res"></div>
+    <div id="feed-sec" class="section active"></div>
+
+    <div id="search-sec" class="section" style="padding:15px;">
+        <input type="text" placeholder="Search friends..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+        <p style="color:gray; text-align:center;">Search feature coming soon!</p>
+    </div>
+
+    <div id="reels-sec" class="section"></div>
+
+    <div id="profile-sec" class="section">
+        <div class="profile-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:80px; height:80px; border-radius:50%; background:#eee;">
+            <h3 id="profile-name">My Profile</h3>
+            <p id="profile-email" style="color:gray; font-size:14px;"></p>
+        </div>
+        <div id="profile-grid" class="grid"></div>
     </div>
 
     <div class="footer">
-        <span onclick="go('feed')">🏠</span>
-        <span onclick="go('search')">🔍</span>
-        <span onclick="up()">➕</span>
-        <span onclick="go('reels')">🎬</span>
-        <span onclick="location.reload()">👤</span>
+        <span onclick="show('feed')">🏠</span>
+        <span onclick="show('search')">🔍</span>
+        <span onclick="upload()">➕</span>
+        <span onclick="show('reels')">🎬</span>
+        <span onclick="show('profile')">👤</span>
     </div>
 
     <script>
@@ -49,51 +62,72 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // 1. Navigation
-        function go(sec) {
-            document.getElementById('feed-div').classList.add('hidden');
-            document.getElementById('reels-div').classList.add('hidden');
-            document.getElementById('search-div').classList.add('hidden');
-            document.getElementById(sec + '-div').classList.remove('hidden');
-            if(sec === 'feed') loadPosts('photo');
-            if(sec === 'reels') loadPosts('reel');
+        // Section Switcher
+        function show(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id + '-sec').classList.add('active');
+            if(id === 'feed') loadPosts('photo', 'feed-sec');
+            if(id === 'reels') loadPosts('reel', 'reels-sec');
+            if(id === 'profile') loadMyPosts();
         }
 
-        // 2. Load Data (Simplified)
-        function loadPosts(type) {
-            db.collection("posts").onSnapshot(snap => {
+        // Load Posts
+        function loadPosts(type, targetId) {
+            db.collection("posts").where("type", "==", type).onSnapshot(snap => {
                 let html = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    if(d.type === type) {
-                        if(type === 'photo') {
-                            html += `<div class="post-card"><div class="post-user">@${d.username}</div><img src="${d.url}" class="post-img"></div>`;
-                        } else {
-                            html += `<div class="post-card"><video src="${d.url}" class="reel-vid" controls autoplay loop muted></video><div class="post-user">@${d.username}</div></div>`;
-                        }
+                    if(type === 'photo') {
+                        html += `<div class="post-card"><div class="post-user">@${d.username}</div><img src="${d.url}" class="post-img"></div>`;
+                    } else {
+                        html += `<div class="post-card"><video src="${d.url}" class="reel-vid" controls autoplay loop muted></video></div>`;
                     }
                 });
-                document.getElementById(type + '-div').innerHTML = html || "<p style='text-align:center; padding:20px;'>Nothing here yet. Post something!</p>";
+                document.getElementById(targetId).innerHTML = html || "<p style='text-align:center; padding:20px;'>Nothing here yet.</p>";
             });
         }
 
-        // 3. Upload
-        function up() {
-            const isReel = confirm("Upload Reel? (Cancel for Photo)");
-            const url = prompt("Paste URL (.jpg or .mp4 link):");
-            if(url) {
+        // Load Profile Grid
+        function loadMyPosts() {
+            const user = auth.currentUser;
+            if(!user) return;
+            document.getElementById('profile-email').innerText = user.email;
+            
+            db.collection("posts").where("uid", "==", user.uid).get().then(snap => {
+                let gridHtml = "";
+                snap.forEach(doc => {
+                    gridHtml += `<img src="${doc.data().url}">`;
+                });
+                document.getElementById('profile-grid').innerHTML = gridHtml || "<p style='padding:20px;'>No posts yet</p>";
+            });
+        }
+
+        // Upload
+        function upload() {
+            const type = confirm("Reel upload karni hai? (Cancel for Photo)") ? "reel" : "photo";
+            const url = prompt("Paste URL:");
+            if(url && auth.currentUser) {
                 db.collection("posts").add({
                     url: url,
-                    type: isReel ? 'reel' : 'photo',
-                    username: "User_" + Math.floor(Math.random()*1000),
+                    type: type,
+                    uid: auth.currentUser.uid,
+                    username: auth.currentUser.email.split('@')[0],
                     time: Date.now()
                 }).then(() => alert("Uploaded!"));
             }
         }
 
-        // Initial Load
-        loadPosts('photo');
+        // Check Login and Start
+        auth.onAuthStateChanged(user => {
+            if (user) show('feed');
+            else {
+                const e = prompt("Email:");
+                const p = prompt("Password:");
+                auth.signInWithEmailAndPassword(e,p).catch(() => alert("Login error"));
+            }
+        });
     </script>
 </body>
 </html>
