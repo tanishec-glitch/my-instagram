@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinCash Pro - Mobile Login</title>
+    <title>WinCash Pro</title>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
@@ -11,30 +11,23 @@
     <style>
         :root { --gold: #ffd700; --bg: #0b0e11; --card: #1c2127; --text: #e9edef; --red: #e74c3c; --blue: #3498db; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        
-        /* Auth Screen */
-        #auth-scr { padding: 50px 20px; text-align: center; display: flex; flex-direction: column; height: 80vh; justify-content: center; }
         input { background: #1c2127; border: 1px solid #333; color: white; padding: 15px; margin: 10px 0; border-radius: 10px; font-size: 16px; width: 90%; align-self: center; }
         .btn-main { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; width: 95%; align-self: center; margin-top: 10px; }
-
-        /* Dashboard & Games */
         .header { background: #1c2127; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; }
         .wallet-btn { background: linear-gradient(90deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 20px; font-weight: bold; border: none; }
         .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
         .game-card { background: var(--card); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid #333; }
-        .screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; }
+        .screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
         .screen.active { display: block !important; }
-        
-        /* DVT Table */
         .timer { font-size: 30px; color: var(--gold); margin-bottom: 20px; }
         .card-box { width: 80px; height: 110px; background: #2c3e50; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; border: 2px solid #444; }
     </style>
 </head>
 <body>
 
-    <div id="auth-scr">
+    <div id="auth-scr" style="padding: 50px 20px; text-align: center; display: flex; flex-direction: column; height: 80vh; justify-content: center;">
         <h1 style="color:var(--gold); font-style: italic;">WinCash🏆</h1>
-        <p>Login with Mobile & Get ₹50 Bonus</p>
+        <p>Login & Get ₹50 Bonus</p>
         <input type="number" id="m-phone" placeholder="10 Digit Mobile Number">
         <input type="password" id="m-pass" placeholder="Password (6+ chars)">
         <button class="btn-main" onclick="handleMobileAuth('login')">LOGIN</button>
@@ -59,16 +52,12 @@
         </div>
         <div style="position:fixed; bottom:20px; width:100%; text-align:center;">
              <button onclick="auth.signOut()" style="background:none; border:none; color:gray;">Logout Account</button>
+             <div style="margin-top: 15px; opacity: 0.1; font-size: 10px;" onclick="openAdmin()">Admin Settings</div>
         </div>
     </div>
-<div style="margin-top: 15px; opacity: 0.1; font-size: 11px; color: gray; text-align: center;" onclick="openAdmin()">Admin Settings</div>
-    
+
     <div id="dvt-scr" class="screen">
-        <div class="header">
-            <span onclick="closeDVT()" style="font-size:25px;">←</span>
-            <b>Dragon vs Tiger</b>
-            <b style="color:var(--gold)">₹<span id="bal-game">0</span></b>
-        </div>
+        <div class="header"><span onclick="closeDVT()" style="font-size:25px;">←</span><b>Dragon vs Tiger</b><b style="color:var(--gold)">₹<span id="bal-game">0</span></b></div>
         <div style="text-align:center; padding:20px;">
             <div class="timer" id="d-timer">10</div>
             <div style="display:flex; justify-content:space-around;">
@@ -88,278 +77,175 @@
         <div style="padding:40px; text-align:center;">
             <p>Your Balance</p>
             <h1 id="bal-wall" style="font-size:40px; color:var(--gold);">₹0</h1>
-            <button class="btn-main" onclick="openWithdraw()"
-">ADD MONEY</button>
-            <button class="btn-main" style="background:var(--red); color:white;" onclick="alert('Min Withdraw ₹200')">WITHDRAW</button>
+            <button class="btn-main" onclick="openWithdraw()">WITHDRAW CASH</button>
+            <button class="btn-main" style="background:transparent; color:gray; border:1px solid #333;" onclick="alert('Min Deposit ₹100')">ADD MONEY</button>
         </div>
-        <div id="wit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; justify-content:center; align-items:center;">
-    <div style="background:#1c2127; padding:25px; border-radius:15px; width:85%; text-align:center; border:1px solid #ffd700;">
-        <h3 style="color:#ffd700; margin-top:0;">Withdraw Money 💸</h3>
-        <p style="font-size:12px; color:gray;">Minimum Withdrawal: ₹200</p>
-        <input type="text" id="wit-upi" placeholder="Enter UPI ID (e.g. name@ybl)" style="width:100%; margin-bottom:10px;">
-        <input type="number" id="wit-amt" placeholder="Amount (Min ₹200)" style="width:100%; margin-bottom:15px;">
-        <button class="btn-main" onclick="sendWithdrawReq()">Submit Request</button>
-        <button onclick="document.getElementById('wit-modal').style.display='none'" style="background:none; border:none; color:gray; margin-top:15px; font-size:14px;">← Go Back</button>
     </div>
-</div>
 
+    <div id="wit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+        <div style="background:var(--card); padding:20px; border-radius:15px; width:85%; text-align:center; border:1px solid var(--gold);">
+            <h3 style="color:var(--gold);">Withdraw Money</h3>
+            <input type="text" id="wit-upi" placeholder="UPI ID (e.g. name@ybl)">
+            <input type="number" id="wit-amt" placeholder="Min ₹200">
+            <button class="btn-main" onclick="sendWithdrawReq()">Submit Request</button>
+            <button onclick="document.getElementById('wit-modal').style.display='none'" style="background:none; border:none; color:gray; margin-top:10px;">Cancel</button>
+        </div>
     </div>
-    <div id="admin-scr" class="screen" style="background: #111;">
-        <div class="header">
-            <span onclick="closeScreen('admin-scr')" style="font-size: 25px; cursor: pointer;">←</span>
-            <b>Admin Control 🛡️</b>
-            <span></span>
-        </div>
+
+    <div id="admin-scr" class="screen">
+        <div class="header"><span onclick="closeScreen('admin-scr')">←</span><b>Admin Control</b><span></span></div>
         <div style="padding:20px; text-align:center;">
-            <h3 style="color:var(--gold);">Update User Balance</h3>
-            <input type="number" id="adm-ph" placeholder="User Mobile Number">
-            <input type="number" id="adm-amt" placeholder="Amount (e.g. 100)">
+            <h3 style="color:var(--gold);">Add/Subtract Balance</h3>
+            <input type="number" id="adm-ph" placeholder="User Phone">
+            <input type="number" id="adm-amt" placeholder="Amount (e.g. 500)">
             <button class="btn-main" onclick="updateUserBal()">Update Money</button>
-            <p id="adm-status" style="margin-top:10px; color: #2ecc71;"></p>
+            <p id="adm-status"></p>
         </div>
-        </div> 
+    </div>
 
     <script>
-        // --- ALL LOGIC START ---
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
+            authDomain: "my-insta-backend.firebaseapp.com",
+            projectId: "my-insta-backend",
+            storageBucket: "my-insta-backend.firebasestorage.app",
+            messagingSenderId: "955106968523",
+            appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-let wallet = 0;
-let myBets = { Dragon: 0, Tiger: 0 };
-let canBet = false;
-let gameInterval;
+        let wallet = 0;
+        let myBets = { Dragon: 0, Tiger: 0 };
+        let canBet = false;
+        let gameInterval;
 
-function handleMobileAuth(type) {
-    const phone = document.getElementById('m-phone').value;
-    const pass = document.getElementById('m-pass').value;
-    if(phone.length < 10 || pass.length < 6) return alert("Sahi Details dalo!");
+        // AUTH LOGIC
+        function handleMobileAuth(type) {
+            const phone = document.getElementById('m-phone').value;
+            const pass = document.getElementById('m-pass').value;
+            if(phone.length < 10 || pass.length < 6) return alert("Sahi Details dalo!");
+            const fakeEmail = phone + "@wincash.com";
 
-    const fakeEmail = phone + "@wincash.com";
-    if(type === 'reg') {
-        auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
-            db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone, uid: u.user.uid });
-            alert("Account Created! ₹50 Bonus Mila.");
-        }).catch(e => alert(e.message));
-    } else {
-        auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Login Fail: " + e.message));
-    }
-}
+            if(type === 'reg') {
+                auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
+                    db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone, uid: u.user.uid });
+                    alert("Account Created! ₹50 Bonus Mila.");
+                }).catch(e => alert(e.message));
+            } else {
+                auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Login Fail: " + e.message));
+            }
+        }
 
-auth.onAuthStateChanged(user => {
-    if(user) {
-        document.getElementById('auth-scr').style.display = 'none';
-        document.getElementById('main-dash').style.display = 'block';
-        db.collection("wallets").doc(user.uid).onSnapshot(doc => {
-            if(doc.exists) {
-                wallet = doc.data().balance;
-                document.getElementById('bal-dash').innerText = wallet;
-                document.getElementById('bal-game').innerText = wallet;
-                document.getElementById('bal-wall').innerText = "₹" + wallet;
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.getElementById('auth-scr').style.display = 'none';
+                document.getElementById('main-dash').style.display = 'block';
+                db.collection("wallets").doc(user.uid).onSnapshot(doc => {
+                    if(doc.exists) {
+                        wallet = doc.data().balance;
+                        document.getElementById('bal-dash').innerText = wallet;
+                        document.getElementById('bal-game').innerText = wallet;
+                        document.getElementById('bal-wall').innerText = "₹" + wallet;
+                    }
+                });
+            } else {
+                document.getElementById('auth-scr').style.display = 'flex';
+                document.getElementById('main-dash').style.display = 'none';
             }
         });
-    } else {
-        document.getElementById('auth-scr').style.display = 'flex';
-        document.getElementById('main-dash').style.display = 'none';
-    }
-});
 
-function openScreen(id) { document.getElementById(id).classList.add('active'); }
-function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
+        // NAVIGATION
+        function openScreen(id) { document.getElementById(id).classList.add('active'); }
+        function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
 
-function startDVT() { openScreen('dvt-scr'); resetGame(); runTimer(); }
-function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
+        // GAME LOGIC
+        function startDVT() { openScreen('dvt-scr'); resetGame(); runTimer(); }
+        function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
 
-function runTimer() {
-    let t = 10; canBet = true;
-    document.getElementById('msg').innerText = "Place Your Bets!";
-    gameInterval = setInterval(() => {
-        t--; document.getElementById('d-timer').innerText = t;
-        if(t <= 0) { clearInterval(gameInterval); showWinner(); }
-    }, 1000);
-}
-
-function bet(side) {
-    if(!canBet) return;
-    if(wallet < 10) return alert("Minimum ₹10 chahiye!");
-    wallet -= 10; myBets[side] += 10;
-    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
-    document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
-}
-
-function showWinner() {
-    canBet = false;
-    document.getElementById('msg').innerText = "Calculating...";
-    setTimeout(() => {
-        const d = Math.floor(Math.random()*13) + 1;
-        const t = Math.floor(Math.random()*13) + 1;
-        document.getElementById('c-d').innerText = d;
-        document.getElementById('c-t').innerText = t;
-        let win = (d > t) ? "Dragon" : "Tiger";
-        document.getElementById('msg').innerText = win.toUpperCase() + " WINS!";
-        if(myBets[win] > 0) {
-            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
-            alert("You Won!");
+        function runTimer() {
+            let t = 10; canBet = true;
+            document.getElementById('msg').innerText = "Place Your Bets!";
+            gameInterval = setInterval(() => {
+                t--; document.getElementById('d-timer').innerText = t;
+                if(t <= 0) { clearInterval(gameInterval); showWinner(); }
+            }, 1000);
         }
-        setTimeout(() => { resetGame(); runTimer(); }, 3000);
-    }, 1000);
-}
 
-function resetGame() {
-    myBets = { Dragon: 0, Tiger: 0 };
-    document.getElementById('b-d').innerText = "₹0"; document.getElementById('b-t').innerText = "₹0";
-    document.getElementById('c-d').innerText = "?"; document.getElementById('c-t').innerText = "?";
-}
-
-// ADMIN & WITHDRAW LOGIC
-function openAdmin() {
-    let p = prompt("Admin Key:");
-    if(p === "tanish123") openScreen('admin-scr');
-}
-
-function updateUserBal() {
-    const ph = document.getElementById('adm-ph').value;
-    const amt = parseInt(document.getElementById('adm-amt').value);
-    db.collection("wallets").where("phone","==",ph).get().then(s => {
-        if(s.empty) return alert("User Not Found");
-        db.collection("wallets").doc(s.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
-        alert("Done!");
-    });
-}
-
-function openWithdraw() {
-    if(wallet < 200) return alert("Min ₹200 chahiye!");
-    document.getElementById('wit-modal').style.display = 'flex';
-}
-
-function sendWithdrawReq() {
-    const upi = document.getElementById('wit-upi').value;
-    const amt = parseInt(document.getElementById('wit-amt').value);
-    if(!upi || amt < 200) return alert("Sahi details dalo!");
-    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet - amt });
-    db.collection("withdrawals").add({ phone: "User", upi: upi, amount: amt, status: "Pending", time: new Date() });
-    alert("Request Sent!");
-    document.getElementById('wit-modal').style.display = 'none';
-}
-</scrip
-    // Configuration aur Logic yahan se shuru
-    const firebaseConfig = {
-        apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
-        authDomain: "my-insta-backend.firebaseapp.com",
-        projectId: "my-insta-backend",
-        storageBucket: "my-insta-backend.firebasestorage.app",
-        messagingSenderId: "955106968523",
-        appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    let wallet = 0;
-    let myBets = { Dragon: 0, Tiger: 0 };
-    let canBet = false;
-    let gameInterval;
-
-    function handleMobileAuth(type) {
-        const phone = document.getElementById('m-phone').value;
-        const pass = document.getElementById('m-pass').value;
-        if(phone.length < 10 || pass.length < 6) return alert("Sahi Details dalo!");
-        const fakeEmail = phone + "@wincash.com";
-        if(type === 'reg') {
-            auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
-                db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone, uid: u.user.uid });
-                alert("Account Created! ₹50 Bonus Mila.");
-            }).catch(e => alert(e.message));
-        } else {
-            auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Login Fail: " + e.message));
+        function bet(side) {
+            if(!canBet) return;
+            if(wallet < 10) return alert("Min ₹10 chahiye!");
+            wallet -= 10; myBets[side] += 10;
+            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
+            document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
         }
-    }
 
-    auth.onAuthStateChanged(user => {
-        if(user) {
-            document.getElementById('auth-scr').style.display = 'none';
-            document.getElementById('main-dash').style.display = 'block';
-            db.collection("wallets").doc(user.uid).onSnapshot(doc => {
-                if(doc.exists) {
-                    wallet = doc.data().balance;
-                    document.getElementById('bal-dash').innerText = wallet;
-                    document.getElementById('bal-game').innerText = wallet;
-                    document.getElementById('bal-wall').innerText = "₹" + wallet;
+        function showWinner() {
+            canBet = false;
+            document.getElementById('msg').innerText = "Calculating...";
+            setTimeout(() => {
+                const d = Math.floor(Math.random()*13) + 1;
+                const t = Math.floor(Math.random()*13) + 1;
+                document.getElementById('c-d').innerText = d;
+                document.getElementById('c-t').innerText = t;
+                let win = (d > t) ? "Dragon" : "Tiger";
+                document.getElementById('msg').innerText = win.toUpperCase() + " WINS!";
+                if(myBets[win] > 0) {
+                    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
+                    alert("You Won!");
                 }
-            });
-        } else {
-            document.getElementById('auth-scr').style.display = 'flex';
-            document.getElementById('main-dash').style.display = 'none';
+                setTimeout(() => { resetGame(); runTimer(); }, 3000);
+            }, 1000);
         }
-    });
 
-    function openScreen(id) { document.getElementById(id).classList.add('active'); }
-    function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
-    function startDVT() { openScreen('dvt-scr'); resetGame(); runTimer(); }
-    function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
+        function resetGame() {
+            myBets = { Dragon: 0, Tiger: 0 };
+            document.getElementById('b-d').innerText = "₹0"; document.getElementById('b-t').innerText = "₹0";
+            document.getElementById('c-d').innerText = "?"; document.getElementById('c-t').innerText = "?";
+        }
 
-    function runTimer() {
-        let t = 10; canBet = true;
-        document.getElementById('d-timer').innerText = t;
-        gameInterval = setInterval(() => {
-            t--; document.getElementById('d-timer').innerText = t;
-            if(t <= 0) { clearInterval(gameInterval); showWinner(); }
-        }, 1000);
-    }
+        // ADMIN & WITHDRAW LOGIC
+        function openAdmin() {
+            let p = prompt("Admin Key:");
+            if(p === "tanish123") openScreen('admin-scr');
+        }
 
-    function bet(side) {
-        if(!canBet || wallet < 10) return alert("Min ₹10 chahiye!");
-        wallet -= 10; myBets[side] += 10;
-        db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
-        document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
-    }
+        function updateUserBal() {
+            const ph = document.getElementById('adm-ph').value;
+            const amt = parseInt(document.getElementById('adm-amt').value);
+            db.collection("wallets").where("phone","==",ph).get().then(s => {
+                if(s.empty) return alert("User Not Found");
+                db.collection("wallets").doc(s.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
+                alert("Balance Updated!");
+            });
+        }
 
-    function showWinner() {
-        canBet = false;
-        const d = Math.floor(Math.random()*13) + 1;
-        const t = Math.floor(Math.random()*13) + 1;
-        document.getElementById('c-d').innerText = d;
-        document.getElementById('c-t').innerText = t;
-        let win = (d > t) ? "Dragon" : "Tiger";
-        if(myBets[win] > 0) db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
-        setTimeout(() => { resetGame(); runTimer(); }, 3000);
-    }
+        function openWithdraw() {
+            if(wallet < 200) return alert("Minimum ₹200 chahiye!");
+            document.getElementById('wit-modal').style.display = 'flex';
+        }
 
-    function resetGame() {
-        myBets = { Dragon: 0, Tiger: 0 };
-        document.getElementById('b-d').innerText = "₹0"; document.getElementById('b-t').innerText = "₹0";
-        document.getElementById('c-d').innerText = "?"; document.getElementById('c-t').innerText = "?";
-    }
+        function sendWithdrawReq() {
+            const upi = document.getElementById('wit-upi').value;
+            const amt = parseInt(document.getElementById('wit-amt').value);
+            if(!upi || amt < 200) return alert("Sahi UPI aur ₹200+ amount dalo!");
+            if(amt > wallet) return alert("Itne paise nahi hain!");
 
-    function openAdmin() {
-        let p = prompt("Admin Key:");
-        if(p === "tanish123") openScreen('admin-scr');
-    }
-
-    function updateUserBal() {
-        const ph = document.getElementById('adm-ph').value;
-        const amt = parseInt(document.getElementById('adm-amt').value);
-        db.collection("wallets").where("phone","==",ph).get().then(s => {
-            if(s.empty) return alert("User Not Found");
-            db.collection("wallets").doc(s.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
-            alert("Done!");
-        });
-    }
-
-    function openWithdraw() {
-        if(wallet < 200) return alert("Min ₹200 chahiye!");
-        document.getElementById('wit-modal').style.display = 'flex';
-    }
-
-    function sendWithdrawReq() {
-        const upi = document.getElementById('wit-upi').value;
-        const amt = parseInt(document.getElementById('wit-amt').value);
-        if(!upi || amt < 200) return alert("Sahi details dalo!");
-        db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet - amt });
-        db.collection("withdrawals").add({ phone: "User", upi: upi, amount: amt, status: "Pending", time: new Date() });
-        alert("Request Sent!");
-        document.getElementById('wit-modal').style.display = 'none';
-    }
-</script>
+            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet - amt });
+            db.collection("withdrawals").add({ 
+                uid: auth.currentUser.uid, 
+                upi: upi, 
+                amount: amt, 
+                status: "Pending", 
+                time: new Date() 
+            }).then(() => {
+                alert("Request Sent!");
+                document.getElementById('wit-modal').style.display = 'none';
+            });
+        }
+    </script>
 </body>
 </html>
-
-                
-
+ 
