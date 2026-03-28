@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tanish Gram - Pro Social</title>
+    <title>Tanish Gram - Search Friends</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
@@ -9,59 +9,51 @@
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #fafafa; padding-bottom: 70px; }
         .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .post { background: white; border: 1px solid #dbdbdb; margin: 10px auto; max-width: 470px; }
-        .post-header { padding: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .user-info { display: flex; align-items: center; font-weight: 600; font-size: 14px; }
-        .dp-small { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; object-fit: cover; background: #eee; }
-        .follow-btn { color: #0095f6; font-weight: 600; font-size: 13px; cursor: pointer; border:none; background:none; }
-        .post-img { width: 100%; display: block; }
         
-        /* Profile Grid Section */
-        #profile-page { display:none; padding: 20px; text-align: center; }
-        .profile-stats { display: flex; justify-content: space-around; margin: 20px 0; border-top: 1px solid #dbdbdb; padding-top: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 20px; }
+        /* Search Screen Style */
+        #search-page { display:none; padding: 15px; }
+        .search-bar { width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; background: #efefef; outline: none; margin-bottom: 20px; }
+        .user-result { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .dp-med { width: 44px; height: 44px; border-radius: 50%; margin-right: 12px; object-fit: cover; background: #eee; }
+        
+        /* Profile & Grid Styles */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 15px; }
         .grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
-
         .footer-nav { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 26px; z-index: 200; }
+        #main-feed, #profile-page { display: block; }
     </style>
 </head>
 <body>
 
-    <div id="profile-modal" style="display:none; position:fixed; top:0; background:white; width:100%; height:100%; z-index:500; padding:20px; box-sizing:border-box;">
-        <h2 style="text-align:center">Edit Profile</h2>
-        <input type="text" id="edit-name" placeholder="Full Name" style="width:100%; padding:10px; margin:10px 0;">
-        <input type="text" id="edit-dp" placeholder="Profile Picture URL" style="width:100%; padding:10px; margin:10px 0;">
-        <button onclick="saveProfile()" style="width:100%; padding:10px; background:#0095f6; color:white; border:none; border-radius:5px; font-weight:bold;">Save Changes</button>
-        <button onclick="document.getElementById('profile-modal').style.display='none'" style="width:100%; margin-top:10px; background:none; border:none; color:grey;">Cancel</button>
-    </div>
-
     <div id="main-app">
-        <div class="header">
+        <div class="header" id="top-header">
             <div style="font-style: italic; font-size: 22px; font-weight: bold;">Instagram</div>
-            <span onclick="document.getElementById('profile-modal').style.display='block'">⚙️</span>
+            <span onclick="openEditProfile()">⚙️</span>
         </div>
-        
-        <div id="feed-container"></div>
 
-        <div id="profile-page">
-            <img id="my-dp" src="" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#eee;">
-            <h3 id="my-name">User Name</h3>
-            <div class="profile-stats">
-                <div><b>0</b><br>posts</div>
-                <div><b>0</b><br>followers</div>
-                <div><b>0</b><br>following</div>
-            </div>
-            <div id="my-grid" class="grid"></div>
+        <div id="search-page">
+            <input type="text" class="search-bar" id="search-input" placeholder="Search friends by name..." oninput="searchUsers()">
+            <div id="search-results"></div>
+        </div>
+
+        <div id="main-feed"></div>
+
+        <div id="profile-page" style="display:none; padding: 20px; text-align:center;">
+            <img id="view-dp" src="" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+            <h3 id="view-name">User Name</h3>
+            <div id="view-grid" class="grid"></div>
         </div>
 
         <div class="footer-nav">
-            <span onclick="showFeed()">🏠</span>
+            <span onclick="showSection('feed')">🏠</span>
+            <span onclick="showSection('search')">🔍</span>
             <span onclick="addNewPost()" style="color:#0095f6;">➕</span>
-            <span onclick="showProfile()">👤</span>
+            <span onclick="showMyProfile()">👤</span>
         </div>
     </div>
 
     <script>
+        // --- CONFIG (Keep yours same) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
             authDomain: "my-insta-backend.firebaseapp.com",
@@ -74,45 +66,58 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        let userData = { name: "User", dp: "" };
+        let currentUserData = {};
 
         auth.onAuthStateChanged(async user => {
             if (user) {
                 const doc = await db.collection("users").doc(user.uid).get();
-                if (doc.exists) userData = doc.data();
-                loadFeed();
-            } else {
-                window.location.href = "index.html"; // Redirect to login if not authenticated
-            }
+                currentUserData = doc.data() || { name: "User" };
+                showSection('feed');
+            } else { window.location.href="index.html"; }
         });
 
-        function showFeed() {
-            document.getElementById('feed-container').style.display = 'block';
-            document.getElementById('profile-page').style.display = 'none';
+        // Navigation Switcher
+        function showSection(name) {
+            document.getElementById('main-feed').style.display = name === 'feed' ? 'block' : 'none';
+            document.getElementById('search-page').style.display = name === 'search' ? 'block' : 'none';
+            document.getElementById('profile-page').style.display = name === 'profile' ? 'block' : 'none';
+            if(name === 'feed') loadFeed();
         }
 
-        async function showProfile() {
-            document.getElementById('feed-container').style.display = 'none';
-            document.getElementById('profile-page').style.display = 'block';
-            document.getElementById('my-name').innerText = userData.name;
-            document.getElementById('my-dp').src = userData.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+        // SEARCH LOGIC
+        async function searchUsers() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            if(!query) { document.getElementById('search-results').innerHTML = ""; return; }
+
+            const snap = await db.collection("users").get(); // Get all users
+            let resultsHtml = "";
+            snap.forEach(doc => {
+                const u = doc.data();
+                if(u.name && u.name.toLowerCase().includes(query)) {
+                    resultsHtml += `
+                        <div class="user-result" onclick="viewUserProfile('${doc.id}', '${u.name}', '${u.dp}')">
+                            <img src="${u.dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="dp-med">
+                            <b>${u.name}</b>
+                        </div>`;
+                }
+            });
+            document.getElementById('search-results').innerHTML = resultsHtml;
+        }
+
+        // VIEW A FRIEND'S PROFILE
+        async function viewUserProfile(uid, name, dp) {
+            showSection('profile');
+            document.getElementById('view-name').innerText = name;
+            document.getElementById('view-dp').src = dp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             
-            // Load only MY posts in grid
-            const snap = await db.collection("posts").where("uid", "==", auth.currentUser.uid).get();
+            const snap = await db.collection("posts").where("uid", "==", uid).get();
             let gridHtml = "";
             snap.forEach(doc => { gridHtml += `<img src="${doc.data().url}">`; });
-            document.getElementById('my-grid').innerHTML = gridHtml || "<p>No posts yet</p>";
+            document.getElementById('view-grid').innerHTML = gridHtml || "<p>No posts yet</p>";
         }
 
-        async function saveProfile() {
-            const uid = auth.currentUser.uid;
-            userData = {
-                name: document.getElementById('edit-name').value || "User",
-                dp: document.getElementById('edit-dp').value || ""
-            };
-            await db.collection("users").doc(uid).set(userData);
-            alert("Saved!");
-            location.reload();
+        function showMyProfile() {
+            viewUserProfile(auth.currentUser.uid, currentUserData.name, currentUserData.dp);
         }
 
         function loadFeed() {
@@ -121,35 +126,20 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     html += `
-                        <div class="post">
-                            <div class="post-header">
-                                <div class="user-info">
-                                    <img src="${d.userDp || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="dp-small">
-                                    ${d.username}
-                                </div>
-                                <button class="follow-btn" onclick="followUser('${d.uid}')">Follow</button>
-                            </div>
-                            <img src="${d.url}" class="post-img">
+                        <div style="background:white; border:1px solid #dbdbdb; margin-bottom:10px;">
+                            <div style="padding:10px; font-weight:bold;">@${d.username}</div>
+                            <img src="${d.url}" style="width:100%">
                         </div>`;
                 });
-                document.getElementById('feed-container').innerHTML = html;
+                document.getElementById('main-feed').innerHTML = html;
             });
-        }
-
-        function followUser(targetUid) {
-            alert("Following " + targetUid);
-            // Real follow logic can be added here in next step
         }
 
         function addNewPost() {
             const url = prompt("Photo URL:");
             if (url) {
                 db.collection("posts").add({
-                    url: url,
-                    uid: auth.currentUser.uid,
-                    username: userData.name,
-                    userDp: userData.dp,
-                    time: Date.now()
+                    url: url, uid: auth.currentUser.uid, username: currentUserData.name, time: Date.now()
                 });
             }
         }
