@@ -3,51 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Instagram Pro - Tanish</title>
+    <title>Instagram Pro</title>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <style>
-        :root { --bg: #000; --text: #fff; --border: #262626; --accent: #0095f6; --gray: #8e8e8e; }
+        :root { --bg: #000; --border: #262626; --accent: #0095f6; --text: #fff; }
         body { font-family: -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; }
+        .section { display: none; padding-bottom: 70px; min-height: 100vh; }
+        .active { display: block; }
         
-        /* Navigation */
+        /* Navbars */
         .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 44px; }
         .footer { background: var(--bg); border-top: 1px solid var(--border); position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 12px 0; font-size: 24px; z-index: 1000; }
+
+        /* Post Cards */
+        .post-card { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .post-img { width: 100%; display: block; background: #1a1a1a; }
         
-        .section { display: none; padding-bottom: 70px; min-height: 90vh; }
-        .active { display: block; }
-
-        /* Posts */
-        .post-card { border-bottom: 1px solid var(--border); margin-bottom: 10px; position: relative; }
-        .post-img { width: 100%; display: block; min-height: 300px; background: #1a1a1a; }
-        .heart-pop { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 80px; transition: 0.3s; opacity: 0; pointer-events: none; }
-        .pop { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-
         /* Profile Grid */
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding-top: 20px; }
-        .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #1a1a1a; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+        .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; }
 
-        /* Profile Stats */
-        .p-header { padding: 20px 15px; display: flex; align-items: center; gap: 20px; }
-        .p-stats { display: flex; flex: 1; justify-content: space-around; text-align: center; }
+        /* Full Post View Modal */
+        #post-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:5000; overflow-y:auto; }
+        
+        /* UI Elements */
         .btn-edit { background: var(--border); border: none; color: white; padding: 8px; width: 92%; margin: 10px 4%; border-radius: 8px; font-weight: 600; }
-
-        input { background: #121212; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 90%; margin: 10px auto; display: block; }
+        .story-bar { display: flex; overflow-x: auto; padding: 10px; gap: 12px; border-bottom: 1px solid var(--border); }
+        .story-circle { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fd1d1d; padding: 2px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div style="font-size: 22px; font-weight: bold; font-style: italic;">Instagram</div>
-        <div style="display:flex; gap:15px;">
+        <div style="display:flex; gap:18px;">
             <span onclick="upload()">➕</span>
             <span onclick="show('chat')">📩</span>
         </div>
     </div>
 
+    <div id="post-modal">
+        <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; align-items:center;">
+            <span onclick="closeModal()" style="font-size:24px; margin-right:20px;">⬅️</span><b>Posts</b>
+        </div>
+        <div id="modal-content"></div>
+    </div>
+
     <div id="feed" class="section active">
-        <div id="feed-container"></div>
+        <div class="story-bar" id="s-list"></div>
+        <div id="feed-cont"></div>
+    </div>
+
+    <div id="reels" class="section">
+        <div id="reels-list" style="height:92vh; overflow-y:scroll; scroll-snap-type:y mandatory;"></div>
+    </div>
+
+    <div id="profile" class="section">
+        <div style="padding: 20px 15px; display: flex; align-items: center; gap: 20px;">
+            <img id="my-dp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+            <div style="display: flex; flex: 1; justify-content: space-around; text-align: center;">
+                <div><b id="p-count">0</b><br><small>posts</small></div>
+                <div><b>267</b><br><small>followers</small></div>
+                <div><b>258</b><br><small>following</small></div>
+            </div>
+        </div>
+        <div style="padding:0 15px;"><b id="my-name">tanish_mandloi._</b><br><span style="font-size:14px; color:#ccc;">Breathe. Believe. Begin. 🌿</span></div>
+        <button class="btn-edit" onclick="editProfile()">Edit Profile</button>
+        <div class="grid" id="my-grid"></div>
     </div>
 
     <div id="chat" class="section">
@@ -55,26 +79,9 @@
         <div id="user-list"></div>
     </div>
 
-    <div id="profile" class="section">
-        <div class="p-header">
-            <img id="my-dp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
-            <div class="p-stats">
-                <div><b id="st-post">0</b><br><small>posts</small></div>
-                <div><b>267</b><br><small>followers</small></div>
-                <div><b>258</b><br><small>following</small></div>
-            </div>
-        </div>
-        <div style="padding:0 15px;">
-            <b id="my-name">tanish_mandloi._</b><br>
-            <span id="my-bio" style="font-size: 14px; color: #efefef;">Breathe. Believe. Begin. 🌿</span>
-        </div>
-        <button class="btn-edit" onclick="editProfile()">Edit Profile</button>
-        <div class="grid" id="my-grid"></div>
-    </div>
-
     <div class="footer">
         <span onclick="show('feed')">🏠</span>
-        <span onclick="alert('Reels coming!')">🎬</span>
+        <span onclick="show('reels')">🎬</span>
         <span onclick="show('profile')">👤</span>
     </div>
 
@@ -91,13 +98,13 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        let userData = { name: "User", dp: "", bio: "" };
-        let lastClick = 0;
+        let me = { name: "User" };
+        let lastTap = 0;
 
         auth.onAuthStateChanged(async user => {
             if (user) {
                 const d = await db.collection("users").doc(user.uid).get();
-                if(d.exists) userData = d.data();
+                if(d.exists) me = d.data();
                 show('feed');
             } else {
                 let e = prompt("Email:"), p = prompt("Password:");
@@ -108,72 +115,81 @@
         function show(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'feed') loadFeed();
+            if(id === 'feed') { loadFeed(); loadStories(); }
             if(id === 'profile') loadProfile();
+            if(id === 'reels') loadReels();
         }
 
-        // --- LIKE FUNCTION ---
-        async function likePost(id, el) {
+        // --- GRID CLICK & LIKES ---
+        async function openPost(pid) {
+            const doc = await db.collection("posts").doc(pid).get();
+            const d = doc.data();
+            document.getElementById('modal-content').innerHTML = `
+                <div class="post-card">
+                    <div style="padding:10px; font-weight:bold;">@${d.username}</div>
+                    <img src="${d.url}" class="post-img">
+                    <div style="padding:10px;">❤️ <b>${d.likes || 0} likes</b></div>
+                    ${d.uid === auth.currentUser.uid ? `<button onclick="delP('${pid}')" style="color:red; background:none; border:none; padding:10px;">Delete Post</button>` : ''}
+                </div>`;
+            document.getElementById('post-modal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('post-modal').style.display = 'none'; }
+
+        async function likeP(id, el, curLikes) {
             const now = Date.now();
-            if(now - lastClick < 300) {
-                const heart = el.querySelector('.heart-pop');
-                heart.classList.add('pop');
-                setTimeout(() => heart.classList.remove('pop'), 800);
-                await db.collection("posts").doc(id).update({ 
-                    likes: firebase.firestore.FieldValue.increment(1) 
-                });
+            if(now - lastTap < 300) {
+                const postRef = db.collection("posts").doc(id);
+                const post = await postRef.get();
+                const likers = post.data().likers || [];
+                if(!likers.includes(auth.currentUser.uid)) {
+                    await postRef.update({ likes: curLikes + 1, likers: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) });
+                }
             }
-            lastClick = now;
+            lastTap = now;
         }
 
+        // --- LOAD FUNCTIONS ---
         function loadFeed() {
-            db.collection("posts").orderBy("time", "desc").onSnapshot(snap => {
+            db.collection("posts").where("type","==","photo").orderBy("time","desc").onSnapshot(snap => {
                 let h = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    h += `
-                    <div class="post-card">
+                    h += `<div class="post-card">
                         <div style="padding:10px; font-weight:600;">@${d.username}</div>
-                        <div style="position:relative" onclick="likePost('${doc.id}', this)">
-                            <div class="heart-pop">❤️</div>
-                            <img src="${d.url}" class="post-img">
-                        </div>
-                        <div style="padding:10px;"><b>${d.likes || 0} likes</b></div>
+                        <img src="${d.url}" class="post-img" onclick="likeP('${doc.id}', this, ${d.likes || 0})">
+                        <div style="padding:10px;">❤️ <b>${d.likes || 0} likes</b></div>
                     </div>`;
                 });
-                document.getElementById('feed-container').innerHTML = h;
+                document.getElementById('feed-cont').innerHTML = h;
             });
         }
 
         async function loadProfile() {
-            document.getElementById('my-name').innerText = userData.name;
-            document.getElementById('my-bio').innerText = userData.bio || "Breathe. Believe. Begin. 🌿";
-            document.getElementById('my-dp').src = userData.dp || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-            
-            const snap = await db.collection("posts").where("uid", "==", auth.currentUser.uid).get();
-            document.getElementById('st-post').innerText = snap.size;
+            document.getElementById('my-name').innerText = me.name;
+            const snap = await db.collection("posts").where("uid","==",auth.currentUser.uid).get();
+            document.getElementById('p-count').innerText = snap.size;
             let gh = "";
-            snap.forEach(doc => gh += `<img src="${doc.data().url}" class="grid-img">`);
+            snap.forEach(doc => gh += `<img src="${doc.data().url}" class="grid-img" onclick="openPost('${doc.id}')">`);
             document.getElementById('my-grid').innerHTML = gh;
         }
 
-        function editProfile() {
-            const n = prompt("New Name:", userData.name);
-            const b = prompt("New Bio:", userData.bio);
-            const d = prompt("New DP URL:", userData.dp);
-            if(n) {
-                db.collection("users").doc(auth.currentUser.uid).set({name:n, bio:b, dp:d}).then(()=>location.reload());
-            }
+        function loadReels() {
+            db.collection("posts").where("type","==","reel").onSnapshot(snap => {
+                let h = "";
+                snap.forEach(doc => h += `<div style="height:92vh; scroll-snap-align:start;"><video src="${doc.data().url}" style="width:100%; height:100%; object-fit:cover;" loop autoplay muted playsinline></video></div>`);
+                document.getElementById('reels-list').innerHTML = h;
+            });
         }
 
         function upload() {
-            const u = prompt("Image URL:");
-            if(u) {
-                db.collection("posts").add({
-                    url: u, uid: auth.currentUser.uid, username: userData.name, 
-                    time: Date.now(), likes: 0
-                }).then(() => alert("Posted!"));
-            }
+            const t = confirm("Reel? (Cancel for Photo)") ? "reel" : "photo";
+            const u = prompt("URL:");
+            if(u) db.collection("posts").add({ url: u, type: t, uid: auth.currentUser.uid, username: me.name, likes: 0, likers: [], time: Date.now() });
+        }
+
+        function editProfile() {
+            const n = prompt("Name:", me.name);
+            if(n) db.collection("users").doc(auth.currentUser.uid).set({name: n}).then(()=>location.reload());
         }
     </script>
 </body>
