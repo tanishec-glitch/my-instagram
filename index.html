@@ -1,132 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Instagram Clone - Login/Register</title>
+    <title>Tanish Gram Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #fafafa; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #fafafa; }
+        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 12px; text-align: center; position: sticky; top: 0; font-style: italic; font-size: 24px; z-index: 100; }
+        .post { background: white; border: 1px solid #dbdbdb; margin: 15px auto; max-width: 470px; border-radius: 3px; }
+        .post-header { padding: 14px; font-weight: 600; display: flex; align-items: center; }
+        .post-img { width: 100%; display: block; border-top: 1px solid #efefef; border-bottom: 1px solid #efefef; }
+        .post-footer { padding: 12px; }
+        .btn-row { font-size: 24px; margin-bottom: 8px; cursor: pointer; }
+        .like-active { color: #ed4956; }
+        .likes-count { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
         .auth-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .auth-box { width: 85%; max-width: 350px; background: white; padding: 25px; border: 1px solid #dbdbdb; text-align: center; border-radius: 8px; }
-        .logo { font-style: italic; font-size: 35px; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 5px; box-sizing: border-box; outline: none; }
-        .btn { width: 100%; padding: 12px; background: #0095f6; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-        .toggle-text { margin-top: 20px; font-size: 14px; color: #8e8e8e; cursor: pointer; }
-        .toggle-text b { color: #0095f6; }
-
-        /* Main App Feed (Hidden by default) */
-        #main-app { display: none; padding-bottom: 70px; }
-        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 12px; text-align: center; position: sticky; top: 0; font-style: italic; font-size: 22px; z-index: 100; }
-        .post { background: white; border: 1px solid #dbdbdb; margin: 15px auto; max-width: 450px; }
-        .post-img { width: 100%; display: block; }
-        .footer { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 26px; }
+        .btn-blue { background: #0095f6; color: white; border: none; padding: 10px; border-radius: 5px; width: 80%; font-weight: bold; margin-top: 10px; }
+        .footer-nav { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 26px; }
+        #auth-screen { display: flex; }
+        #main-app { display: none; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen" class="auth-container">
-        <div class="auth-box">
-            <div class="logo">Instagram</div>
-            <h3 id="auth-title">Create Account</h3>
-            <input type="email" id="email" placeholder="Email address">
-            <input type="password" id="password" placeholder="Password">
-            <button class="btn" id="main-btn" onclick="authProcess()">Sign Up</button>
-            
-            <p class="toggle-text" id="toggle-link" onclick="toggleAuth()">
-                Already have an account? <b>Log In</b>
-            </p>
-        </div>
+        <h1 style="font-style: italic; font-size: 40px;">Instagram</h1>
+        <input type="email" id="email" placeholder="Email" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #dbdbdb;">
+        <input type="password" id="password" placeholder="Password" style="width: 80%; padding: 10px; margin: 5px; border: 1px solid #dbdbdb;">
+        <button class="btn-blue" onclick="handleAuth('signup')">Sign Up</button>
+        <button onclick="handleAuth('login')" style="background:none; border:none; color:#0095f6; margin-top:15px;">Log In</button>
     </div>
 
     <div id="main-app">
-        <div class="header">Instagram Clone</div>
-        <div id="feed"></div>
-        <div class="footer">
+        <div class="header">Instagram</div>
+        <div id="feed" style="padding-bottom: 80px;"></div>
+        <div class="footer-nav">
             <span onclick="location.reload()">🏠</span>
-            <span onclick="addNewPost()" style="color:#0095f6; font-weight:bold;">➕</span>
-            <span onclick="logout()">🚪</span>
+            <span onclick="addNewPost()" style="color:#0095f6;">➕</span>
+            <span onclick="firebase.auth().signOut().then(()=>location.reload())">👤</span>
         </div>
     </div>
 
     <script>
-        // --- YOUR FIREBASE CONFIG ---
+        // --- YOUR FIREBASE CONFIG (Sahi wala) ---
         const firebaseConfig = {
-          apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
-          authDomain: "my-insta-backend.firebaseapp.com",
-          projectId: "my-insta-backend",
-          storageBucket: "my-insta-backend.firebasestorage.app",
-          messagingSenderId: "955106968523",
-          appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
+            apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
+            authDomain: "my-insta-backend.firebaseapp.com",
+            projectId: "my-insta-backend",
+            storageBucket: "my-insta-backend.firebasestorage.app",
+            messagingSenderId: "955106968523",
+            appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        let isLoginMode = false;
-
-        // Toggle function (Switch between Sign Up and Login)
-        function toggleAuth() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerText = isLoginMode ? "Log In" : "Create Account";
-            document.getElementById('main-btn').innerText = isLoginMode ? "Log In" : "Sign Up";
-            document.getElementById('toggle-link').innerHTML = isLoginMode ? 
-                "Don't have an account? <b>Sign Up</b>" : "Already have an account? <b>Log In</b>";
-        }
-
-        // Authentication Process
-        function authProcess() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-
-            if(!email || !pass) return alert("Email and Password fill karein!");
-
-            if (isLoginMode) {
-                auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-            } else {
-                auth.createUserWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-            }
-        }
-
-        // Auth Observer (Keep user logged in)
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
                 loadFeed();
-            } else {
-                document.getElementById('auth-screen').style.display = 'flex';
-                document.getElementById('main-app').style.display = 'none';
             }
         });
+
+        function handleAuth(type) {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            if(type === 'signup') auth.createUserWithEmailAndPassword(e, p).catch(a => alert(a.message));
+            else auth.signInWithEmailAndPassword(e, p).catch(a => alert(a.message));
+        }
 
         function loadFeed() {
             db.collection("posts").orderBy("time", "desc").onSnapshot(snap => {
                 let html = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    html += `<div class="post"><div style="padding:10px;font-weight:bold;">${d.username}</div><img src="${d.url}" class="post-img"></div>`;
+                    const postId = doc.id;
+                    const likes = d.likes || 0;
+                    html += `
+                        <div class="post">
+                            <div class="post-header">@${d.username}</div>
+                            <img src="${d.url}" class="post-img">
+                            <div class="post-footer">
+                                <div class="btn-row">
+                                    <span onclick="likePost('${postId}', ${likes})">❤️</span>
+                                    <span onclick="alert('Comment feature coming soon!')">💬</span>
+                                </div>
+                                <div class="likes-count">${likes} likes</div>
+                                <div style="font-size: 14px;"><b>${d.username}</b> New photo shared!</div>
+                            </div>
+                        </div>`;
                 });
                 document.getElementById('feed').innerHTML = html;
             });
         }
 
+        function likePost(id, currentLikes) {
+            db.collection("posts").doc(id).update({ likes: currentLikes + 1 });
+        }
+
         function addNewPost() {
-            const url = prompt("Paste Photo URL:");
+            const url = prompt("Photo URL Paste Karein:");
             if (url) {
                 db.collection("posts").add({
                     url: url,
                     username: auth.currentUser.email.split('@')[0],
+                    likes: 0,
                     time: Date.now()
                 });
             }
         }
-
-        function logout() {
-            if(confirm("Logout karna chahte hain?")) auth.signOut();
-        }
     </script>
 </body>
 </html>
-
