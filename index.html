@@ -117,10 +117,11 @@
             <button class="btn-main" onclick="updateUserBal()">Update Money</button>
             <p id="adm-status" style="margin-top:10px; color: #2ecc71;"></p>
         </div>
-    </div>
+        </div> 
 
     <script>
         const firebaseConfig = {
+
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
             authDomain: "my-insta-backend.firebaseapp.com",
             projectId: "my-insta-backend",
@@ -150,10 +151,12 @@
                     db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone });
                     alert("Account Created! ₹50 Bonus Added.");
                 }).catch(e => alert(e.message));
-            } else {
-                auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Invalid Details!"));
-            }
-        }
+                } else {
+        auth.signInWithEmailAndPassword(fakeEmail, pass)
+        .catch(e => alert("Login Fail: " + e.message));
+    }
+} // <--- Ye wala bracket miss tha jo poore function ko band karta hai
+
 
         auth.onAuthStateChanged(user => {
             if(user) {
