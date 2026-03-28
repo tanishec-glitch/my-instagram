@@ -3,129 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinCash Pro - Multi Game App</title>
+    <title>WinCash Pro - Mobile Login</title>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
 
     <style>
         :root { --gold: #ffd700; --bg: #0b0e11; --card: #1c2127; --text: #e9edef; --red: #e74c3c; --blue: #3498db; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        /* Auth Screen */
+        #auth-scr { padding: 50px 20px; text-align: center; display: flex; flex-direction: column; height: 80vh; justify-content: center; }
+        input { background: #1c2127; border: 1px solid #333; color: white; padding: 15px; margin: 10px 0; border-radius: 10px; font-size: 16px; width: 90%; align-self: center; }
+        .btn-main { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; width: 95%; align-self: center; margin-top: 10px; }
 
-        /* Dashboard Styles */
+        /* Dashboard & Games */
         .header { background: #1c2127; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; }
-        .wallet-btn { background: linear-gradient(90deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 20px; font-weight: bold; border: none; cursor: pointer; }
-        
-        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; padding-bottom: 100px; }
-        .game-card { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid #333; text-align: center; padding-bottom: 10px; position: relative; }
-        .game-img { font-size: 45px; padding: 20px; background: #242a32; }
-        
-        /* Screen Management */
-        .screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
+        .wallet-btn { background: linear-gradient(90deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 20px; font-weight: bold; border: none; }
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+        .game-card { background: var(--card); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid #333; }
+        .screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; }
         .screen.active { display: block !important; }
-
-        /* Dragon vs Tiger UI */
-        .dvt-container { padding: 20px; text-align: center; }
-        .timer-circle { font-size: 24px; color: var(--gold); background: #1c2127; width: 60px; height: 60px; line-height: 60px; border-radius: 50%; border: 3px solid var(--gold); margin: 0 auto 20px; }
-        .card-box { width: 90px; height: 130px; background: #2c3e50; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: bold; border: 2px solid #444; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        .bet-area { display: grid; grid-template-columns: 1fr 0.6fr 1fr; gap: 8px; margin-top: 20px; }
-        .bet-btn { border: none; border-radius: 12px; padding: 15px 5px; color: white; font-weight: bold; cursor: pointer; }
-        .chip-btn { background: #333; color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 50px; margin: 5px; }
         
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #1c2127; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 99; }
+        /* DVT Table */
+        .timer { font-size: 30px; color: var(--gold); margin-bottom: 20px; }
+        .card-box { width: 80px; height: 110px; background: #2c3e50; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; border: 2px solid #444; }
     </style>
 </head>
 <body>
 
-    <div id="main-dash">
+    <div id="auth-scr">
+        <h1 style="color:var(--gold); font-style: italic;">WinCash🏆</h1>
+        <p>Login with Mobile & Get ₹50 Bonus</p>
+        <input type="number" id="m-phone" placeholder="10 Digit Mobile Number">
+        <input type="password" id="m-pass" placeholder="Password (6+ chars)">
+        <button class="btn-main" onclick="handleMobileAuth('login')">LOGIN</button>
+        <p style="margin: 20px 0 10px;">New User?</p>
+        <button class="btn-main" style="background:transparent; color:var(--gold); border:1px solid var(--gold);" onclick="handleMobileAuth('reg')">CREATE ACCOUNT</button>
+    </div>
+
+    <div id="main-dash" style="display:none;">
         <div class="header">
-            <b style="font-size: 22px; color: var(--gold);">WinCash🏆</b>
-            <button class="wallet-btn" onclick="openScreen('wallet-scr')">🪙 ₹<span id="dash-bal">0</span></button>
+            <b style="color:var(--gold); font-size: 20px;">WinCash</b>
+            <button class="wallet-btn" onclick="openScreen('wallet-scr')">🪙 ₹<span id="bal-dash">0</span></button>
         </div>
-
-        <div style="background: linear-gradient(90deg, #1e3a8a, #1e40af); margin: 15px; padding: 20px; border-radius: 15px; text-align: center;">
-            <h2 style="margin:0;">₹50 Registration Bonus! 🎁</h2>
-            <p>Play Games & Win Real Cash</p>
-        </div>
-
         <div class="game-grid">
             <div class="game-card" onclick="startDVT()">
-                <div style="position:absolute; background:red; font-size:10px; padding:2px 5px; top:5px; right:5px; border-radius:3px;">HOT</div>
-                <div class="game-img">🐉</div>
+                <div style="font-size:40px;">🐉</div>
                 <b>Dragon vs Tiger</b>
             </div>
             <div class="game-card" onclick="alert('Coming Soon!')">
-                <div class="game-img">🎡</div>
+                <div style="font-size:40px;">🎡</div>
                 <b>Spin Wheel</b>
             </div>
-            <div class="game-card" onclick="alert('Coming Soon!')">
-                <div class="game-img">🃏</div>
-                <b>Andar Bahar</b>
-            </div>
-            <div class="game-card" onclick="alert('Coming Soon!')">
-                <div class="game-img">🎲</div>
-                <b>Ludo King</b>
-            </div>
         </div>
-
-        <div class="bottom-nav">
-            <span>🏠 Home</span>
-            <span onclick="openScreen('wallet-scr')">💸 Wallet</span>
-            <span onclick="location.reload()">🔄 Refresh</span>
+        <div style="position:fixed; bottom:20px; width:100%; text-align:center;">
+             <button onclick="auth.signOut()" style="background:none; border:none; color:gray;">Logout Account</button>
         </div>
     </div>
 
     <div id="dvt-scr" class="screen">
         <div class="header">
-            <span onclick="closeDVT()" style="font-size: 25px;">←</span>
+            <span onclick="closeDVT()" style="font-size:25px;">←</span>
             <b>Dragon vs Tiger</b>
-            <b style="color:var(--gold)">₹<span id="game-bal">0</span></b>
+            <b style="color:var(--gold)">₹<span id="bal-game">0</span></b>
         </div>
-        
-        <div class="dvt-container">
-            <div class="timer-circle" id="dvt-timer">10</div>
-            
-            <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
-                <div>
-                    <div id="card-d" class="card-box" style="border-color: var(--red);">?</div>
-                    <p style="color:var(--red); font-weight:bold;">DRAGON</p>
-                </div>
-                <div style="align-self:center; font-weight:bold; font-size:20px;">VS</div>
-                <div>
-                    <div id="card-t" class="card-box" style="border-color: var(--blue);">?</div>
-                    <p style="color:var(--blue); font-weight:bold;">TIGER</p>
-                </div>
+        <div style="text-align:center; padding:20px;">
+            <div class="timer" id="d-timer">10</div>
+            <div style="display:flex; justify-content:space-around;">
+                <div id="c-d" class="card-box" style="border-color:var(--red)">?</div>
+                <div id="c-t" class="card-box" style="border-color:var(--blue)">?</div>
             </div>
-
-            <div class="bet-area">
-                <button class="bet-btn" style="background:var(--red)" onclick="placeBet('Dragon')">DRAGON<br>2x<br><br><span id="b-dragon">₹0</span></button>
-                <button class="bet-btn" style="background:#8e44ad" onclick="placeBet('Tie')">TIE<br>9x<br><br><span id="b-tie">₹0</span></button>
-                <button class="bet-btn" style="background:var(--blue)" onclick="placeBet('Tiger')">TIGER<br>2x<br><br><span id="b-tiger">₹0</span></button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:30px;">
+                <button onclick="bet('Dragon')" style="background:var(--red); padding:20px; border-radius:10px; border:none; color:white; font-weight:bold;">DRAGON<br><span id="b-d">₹0</span></button>
+                <button onclick="bet('Tiger')" style="background:var(--blue); padding:20px; border-radius:10px; border:none; color:white; font-weight:bold;">TIGER<br><span id="b-t">₹0</span></button>
             </div>
-
-            <div style="margin-top:25px;">
-                <p>Chips: 
-                    <button class="chip-btn" onclick="currentChip=10">₹10</button>
-                    <button class="chip-btn" onclick="currentChip=50">₹50</button>
-                    <button class="chip-btn" onclick="currentChip=100">₹100</button>
-                </p>
-            </div>
-            <h3 id="dvt-msg" style="color:var(--gold)"></h3>
+            <p id="msg" style="margin-top:20px; font-weight:bold; color:var(--gold);"></p>
         </div>
     </div>
 
     <div id="wallet-scr" class="screen">
         <div class="header"><span onclick="closeScreen('wallet-scr')">←</span><b>Wallet</b><span></span></div>
         <div style="padding:40px; text-align:center;">
-            <p>Total Balance</p>
-            <h1 id="wall-bal" style="font-size:45px; color:var(--gold); margin:10px 0;">₹0</h1>
-            <button class="wallet-btn" style="width:100%; padding:15px; margin-bottom:10px;" onclick="alert('Min Deposit ₹100')">ADD CASH</button>
-            <button class="wallet-btn" style="width:100%; padding:15px; background:var(--red); color:white;" onclick="alert('Min Withdraw ₹200')">WITHDRAW</button>
+            <p>Your Balance</p>
+            <h1 id="bal-wall" style="font-size:40px; color:var(--gold);">₹0</h1>
+            <button class="btn-main" onclick="alert('Min Deposit ₹100')">ADD MONEY</button>
+            <button class="btn-main" style="background:var(--red); color:white;" onclick="alert('Min Withdraw ₹200')">WITHDRAW</button>
         </div>
     </div>
 
     <script>
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
             authDomain: "my-insta-backend.firebaseapp.com",
@@ -139,121 +106,108 @@
         const auth = firebase.auth();
 
         let wallet = 0;
-        let userUID = "";
-        let currentChip = 10;
-        let myBets = { Dragon: 0, Tiger: 0, Tie: 0 };
-        let timerVal = 10;
-        let canBet = true;
-        let gameLoop;
+        let myBets = { Dragon: 0, Tiger: 0 };
+        let canBet = false;
+        let gameInterval;
 
-        // AUTH SYSTEM
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                userUID = user.uid;
-                loadWalletData();
+        // AUTH LOGIC
+        function handleMobileAuth(type) {
+            const phone = document.getElementById('m-phone').value;
+            const pass = document.getElementById('m-pass').value;
+            if(phone.length < 10 || pass.length < 6) return alert("Valid Phone (10 digit) aur Pass (6 digit) dalo!");
+            
+            const fakeEmail = phone + "@wincash.com";
+
+            if(type === 'reg') {
+                auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
+                    db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone });
+                    alert("Account Created! ₹50 Bonus Added.");
+                }).catch(e => alert(e.message));
             } else {
-                let mail = prompt("Enter Email for Game:");
-                let pass = prompt("Enter Password (6+ characters):");
-                auth.signInWithEmailAndPassword(mail, pass).catch(() => {
-                    auth.createUserWithEmailAndPassword(mail, pass).then(u => {
-                        db.collection("wallets").doc(u.user.uid).set({ balance: 50 });
-                    });
+                auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Invalid Details!"));
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.getElementById('auth-scr').style.display = 'none';
+                document.getElementById('main-dash').style.display = 'block';
+                db.collection("wallets").doc(user.uid).onSnapshot(doc => {
+                    wallet = doc.data().balance;
+                    document.getElementById('bal-dash').innerText = wallet;
+                    document.getElementById('bal-game').innerText = wallet;
+                    document.getElementById('bal-wall').innerText = "₹" + wallet;
                 });
+            } else {
+                document.getElementById('auth-scr').style.display = 'flex';
+                document.getElementById('main-dash').style.display = 'none';
             }
         });
 
-        function loadWalletData() {
-            db.collection("wallets").doc(userUID).onSnapshot(doc => {
-                wallet = doc.data().balance;
-                document.getElementById('dash-bal').innerText = wallet.toFixed(2);
-                document.getElementById('game-bal').innerText = wallet.toFixed(2);
-                document.getElementById('wall-bal').innerText = "₹" + wallet.toFixed(2);
-            });
-        }
-
-        // NAVIGATION
+        // SCREEN NAV
         function openScreen(id) { document.getElementById(id).classList.add('active'); }
         function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
 
-        // DRAGON VS TIGER LOGIC
+        // GAME LOGIC
         function startDVT() {
             openScreen('dvt-scr');
-            resetTable();
+            resetGame();
             runTimer();
         }
 
-        function closeDVT() {
-            closeScreen('dvt-scr');
-            clearInterval(gameLoop);
-        }
+        function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
 
         function runTimer() {
+            let t = 10;
             canBet = true;
-            timerVal = 10;
-            document.getElementById('dvt-msg').innerText = "Place Your Bets!";
-            gameLoop = setInterval(() => {
-                timerVal--;
-                document.getElementById('dvt-timer').innerText = timerVal;
-                if(timerVal <= 0) {
-                    clearInterval(gameLoop);
-                    processWinner();
+            document.getElementById('msg').innerText = "Place Your Bets!";
+            gameInterval = setInterval(() => {
+                t--;
+                document.getElementById('d-timer').innerText = t;
+                if(t <= 0) {
+                    clearInterval(gameInterval);
+                    showWinner();
                 }
             }, 1000);
         }
 
-        function placeBet(side) {
+        function bet(side) {
             if(!canBet) return;
-            if(wallet < currentChip) return alert("Low Balance!");
-
-            wallet -= currentChip;
-            myBets[side] += currentChip;
-            db.collection("wallets").doc(userUID).update({ balance: wallet });
-            document.getElementById('b-' + side.toLowerCase()).innerText = "₹" + myBets[side];
+            if(wallet < 10) return alert("Minimum ₹10 chahiye!");
+            wallet -= 10;
+            myBets[side] += 10;
+            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
+            document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
         }
 
-        function processWinner() {
+        function showWinner() {
             canBet = false;
-            document.getElementById('dvt-msg').innerText = "Shuffling...";
-            
+            document.getElementById('msg').innerText = "Calculating...";
             setTimeout(() => {
-                const cards = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-                const powers = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13};
-                
-                const dC = cards[Math.floor(Math.random()*13)];
-                const tC = cards[Math.floor(Math.random()*13)];
-                
-                document.getElementById('card-d').innerText = dC;
-                document.getElementById('card-t').innerText = tC;
+                const d = Math.floor(Math.random()*13) + 1;
+                const t = Math.floor(Math.random()*13) + 1;
+                document.getElementById('c-d').innerText = d;
+                document.getElementById('c-t').innerText = t;
 
-                let win = "";
-                if(powers[dC] > powers[tC]) win = "Dragon";
-                else if(powers[tC] > powers[dC]) win = "Tiger";
-                else win = "Tie";
+                let win = (d > t) ? "Dragon" : "Tiger";
+                document.getElementById('msg').innerText = win.toUpperCase() + " WINS!";
 
-                document.getElementById('dvt-msg').innerText = win.toUpperCase() + " WINS!";
-                
-                // Winning Calculation
                 if(myBets[win] > 0) {
-                    let prize = (win === 'Tie') ? myBets[win] * 9 : myBets[win] * 2;
-                    db.collection("wallets").doc(userUID).update({ balance: wallet + prize });
-                    alert("You Won ₹" + prize + "!");
+                    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
+                    alert("You Won!");
                 }
-
-                setTimeout(() => {
-                    resetTable();
-                    runTimer();
-                }, 4000);
-            }, 2000);
+                setTimeout(() => { resetGame(); runTimer(); }, 3000);
+            }, 1000);
         }
 
-        function resetTable() {
-            myBets = { Dragon: 0, Tiger: 0, Tie: 0 };
-            document.getElementById('b-dragon').innerText = "₹0";
-            document.getElementById('b-tiger').innerText = "₹0";
-            document.getElementById('b-tie').innerText = "₹0";
-            document.getElementById('card-d').innerText = "?";
-            document.getElementById('card-t').innerText = "?";
+        function resetGame() {
+            myBets = { Dragon: 0, Tiger: 0 };
+            document.getElementById('b-d').innerText = "₹0";
+            document.getElementById('b-t').innerText = "₹0";
+            document.getElementById('c-d').innerText = "?";
+            document.getElementById('c-t').innerText = "?";
         }
     </script>
 </body>
 </html>
+
