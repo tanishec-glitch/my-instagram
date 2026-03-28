@@ -1,35 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tanish Gram - Social</title>
+    <title>Tanish Gram - Profile Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; margin: 0; background: #fafafa; padding-bottom: 80px; }
-        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 12px; text-align: center; position: sticky; top: 0; font-style: italic; font-size: 24px; z-index: 100; }
-        .post { background: white; border: 1px solid #dbdbdb; margin: 15px auto; max-width: 470px; border-radius: 3px; }
-        .post-header { padding: 14px; font-weight: 600; }
+        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .insta-logo { font-style: italic; font-size: 24px; font-weight: bold; }
+        .post { background: white; border: 1px solid #dbdbdb; margin: 15px auto; max-width: 470px; }
+        .post-header { padding: 10px; display: flex; align-items: center; font-weight: 600; }
+        .dp-small { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; object-fit: cover; background: #eee; }
         .post-img { width: 100%; display: block; }
-        .post-footer { padding: 12px; }
-        .likes-count { font-weight: 600; font-size: 14px; margin-bottom: 8px; cursor: pointer; }
-        .comment-section { border-top: 1px solid #efefef; padding: 10px; font-size: 14px; max-height: 100px; overflow-y: auto; }
-        .comment-input-row { display: flex; border-top: 1px solid #efefef; padding: 5px; }
-        .comment-input { border: none; flex: 1; outline: none; padding: 8px; font-size: 14px; }
-        .post-btn { color: #0095f6; font-weight: bold; cursor: pointer; padding: 8px; border: none; background: none; }
+        
+        /* Edit Profile Modal */
+        #profile-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:500; padding:20px; box-sizing:border-box; }
+        .input-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 5px; margin-top: 5px; }
+        
         .footer-nav { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 26px; z-index: 100; }
+        .save-btn { background: #0095f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; width: 100%; }
     </style>
 </head>
 <body>
 
+    <div id="profile-modal">
+        <h2 style="text-align:center">Edit Profile</h2>
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="edit-name" placeholder="E.g. Tanish Mandloi">
+        </div>
+        <div class="input-group">
+            <label>Bio</label>
+            <input type="text" id="edit-bio" placeholder="E.g. Tech Enthusiast | Photographer">
+        </div>
+        <div class="input-group">
+            <label>Profile Picture URL</label>
+            <input type="text" id="edit-dp" placeholder="Paste image link here">
+        </div>
+        <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+        <button onclick="closeProfile()" style="background:none; border:none; color:red; width:100%; margin-top:10px;">Cancel</button>
+    </div>
+
     <div id="main-app">
-        <div class="header">Instagram</div>
+        <div class="header">
+            <div class="insta-logo">Instagram</div>
+            <span onclick="openProfile()" style="font-size: 20px; cursor: pointer;">⚙️</span>
+        </div>
         <div id="feed"></div>
         <div class="footer-nav">
             <span onclick="location.reload()">🏠</span>
             <span onclick="addNewPost()" style="color:#0095f6;">➕</span>
-            <span onclick="firebase.auth().signOut().then(()=>location.reload())">👤</span>
+            <span onclick="firebase.auth().signOut().then(()=>location.reload())">🚪</span>
         </div>
     </div>
 
@@ -46,62 +70,74 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => { if (user) loadFeed(); else window.location.href="index.html"; });
+        let myProfile = { name: "User", bio: "", dp: "" };
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadMyProfile(user.uid);
+                loadFeed();
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        async function loadMyProfile(uid) {
+            const doc = await db.collection("users").doc(uid).get();
+            if (doc.exists) {
+                myProfile = doc.data();
+            }
+        }
+
+        function openProfile() { document.getElementById('profile-modal').style.display = 'block'; }
+        function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+
+        async function saveProfile() {
+            const uid = auth.currentUser.uid;
+            myProfile = {
+                name: document.getElementById('edit-name').value,
+                bio: document.getElementById('edit-bio').value,
+                dp: document.getElementById('edit-dp').value
+            };
+            await db.collection("users").doc(uid).set(myProfile);
+            alert("Profile Updated!");
+            closeProfile();
+            location.reload();
+        }
 
         function loadFeed() {
             db.collection("posts").orderBy("time", "desc").onSnapshot(snap => {
                 let html = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const postId = doc.id;
                     html += `
                         <div class="post">
-                            <div class="post-header">@${d.username}</div>
+                            <div class="post-header">
+                                <img src="${d.userDp || ''}" class="dp-small">
+                                <div>
+                                    <div style="font-size:14px">${d.username}</div>
+                                    <div style="font-size:10px; color:#8e8e8e">${d.bio || ''}</div>
+                                </div>
+                            </div>
                             <img src="${d.url}" class="post-img">
-                            <div class="post-footer">
-                                <div class="likes-count" onclick="likePost('${postId}', ${d.likes || 0})">❤️ ${d.likes || 0} likes</div>
-                                <div id="comments-${postId}" class="comment-section">Loading comments...</div>
-                            </div>
-                            <div class="comment-input-row">
-                                <input id="input-${postId}" class="comment-input" placeholder="Add a comment...">
-                                <button class="post-btn" onclick="addComment('${postId}')">Post</button>
-                            </div>
+                            <div style="padding:10px"><b>${d.likes || 0} likes</b></div>
                         </div>`;
-                    loadComments(postId);
                 });
                 document.getElementById('feed').innerHTML = html;
             });
         }
 
-        function loadComments(postId) {
-            db.collection("posts").doc(postId).collection("comments").orderBy("time", "asc").onSnapshot(snap => {
-                const box = document.getElementById(`comments-${postId}`);
-                let cHtml = "";
-                snap.forEach(c => {
-                    const cd = c.data();
-                    cHtml += `<div><b>${cd.user}</b>: ${cd.text}</div>`;
-                });
-                box.innerHTML = cHtml || "<span style='color:#999'>No comments yet</span>";
-            });
-        }
-
-        function addComment(postId) {
-            const text = document.getElementById(`input-${postId}`).value;
-            if(!text) return;
-            db.collection("posts").doc(postId).collection("comments").add({
-                text: text,
-                user: auth.currentUser.email.split('@')[0],
-                time: Date.now()
-            }).then(() => { document.getElementById(`input-${postId}`).value = ""; });
-        }
-
-        function likePost(id, cur) { db.collection("posts").doc(id).update({ likes: cur + 1 }); }
-
         function addNewPost() {
             const url = prompt("Photo URL:");
-            if (url) db.collection("posts").add({
-                url: url, username: auth.currentUser.email.split('@')[0], likes: 0, time: Date.now()
-            });
+            if (url) {
+                db.collection("posts").add({
+                    url: url,
+                    username: myProfile.name || auth.currentUser.email.split('@')[0],
+                    userDp: myProfile.dp || "",
+                    bio: myProfile.bio || "",
+                    likes: 0,
+                    time: Date.now()
+                });
+            }
         }
     </script>
 </body>
