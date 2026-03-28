@@ -120,187 +120,246 @@
         </div> 
 
     <script>
-        const firebaseConfig = {
+        // --- ALL LOGIC START ---
 
-            apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
-            authDomain: "my-insta-backend.firebaseapp.com",
-            projectId: "my-insta-backend",
-            storageBucket: "my-insta-backend.firebasestorage.app",
-            messagingSenderId: "955106968523",
-            appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+let wallet = 0;
+let myBets = { Dragon: 0, Tiger: 0 };
+let canBet = false;
+let gameInterval;
 
-        let wallet = 0;
-        let myBets = { Dragon: 0, Tiger: 0 };
-        let canBet = false;
-        let gameInterval;
-
-        // AUTH LOGIC
-        function handleMobileAuth(type) {
+function handleMobileAuth(type) {
     const phone = document.getElementById('m-phone').value;
     const pass = document.getElementById('m-pass').value;
-    
-    if(phone.length < 10 || pass.length < 6) {
-        return alert("Sahi Mobile (10 digit) aur Password (6 digit) dalo!");
-    }
+    if(phone.length < 10 || pass.length < 6) return alert("Sahi Details dalo!");
 
     const fakeEmail = phone + "@wincash.com";
-
     if(type === 'reg') {
         auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
-            db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone });
-            alert("Account Created! ₹50 Bonus Added.");
+            db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone, uid: u.user.uid });
+            alert("Account Created! ₹50 Bonus Mila.");
         }).catch(e => alert(e.message));
     } else {
         auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Login Fail: " + e.message));
     }
 }
 
-    }
-} // <--- Ye wala bracket miss tha jo poore function ko band karta hai
-
-
-        auth.onAuthStateChanged(user => {
-            if(user) {
-                document.getElementById('auth-scr').style.display = 'none';
-                document.getElementById('main-dash').style.display = 'block';
-                db.collection("wallets").doc(user.uid).onSnapshot(doc => {
-                    wallet = doc.data().balance;
-                    document.getElementById('bal-dash').innerText = wallet;
-                    document.getElementById('bal-game').innerText = wallet;
-                    document.getElementById('bal-wall').innerText = "₹" + wallet;
-                });
-            } else {
-                document.getElementById('auth-scr').style.display = 'flex';
-                document.getElementById('main-dash').style.display = 'none';
+auth.onAuthStateChanged(user => {
+    if(user) {
+        document.getElementById('auth-scr').style.display = 'none';
+        document.getElementById('main-dash').style.display = 'block';
+        db.collection("wallets").doc(user.uid).onSnapshot(doc => {
+            if(doc.exists) {
+                wallet = doc.data().balance;
+                document.getElementById('bal-dash').innerText = wallet;
+                document.getElementById('bal-game').innerText = wallet;
+                document.getElementById('bal-wall').innerText = "₹" + wallet;
             }
         });
-
-        // SCREEN NAV
-        function openScreen(id) { document.getElementById(id).classList.add('active'); }
-        function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
-
-        // GAME LOGIC
-        function startDVT() {
-            openScreen('dvt-scr');
-            resetGame();
-            runTimer();
-        }
-
-        function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
-
-        function runTimer() {
-            let t = 10;
-            canBet = true;
-            document.getElementById('msg').innerText = "Place Your Bets!";
-            gameInterval = setInterval(() => {
-                t--;
-                document.getElementById('d-timer').innerText = t;
-                if(t <= 0) {
-                    clearInterval(gameInterval);
-                    showWinner();
-                }
-            }, 1000);
-// Line 188 par paste karein
-function openAdmin() {
-    let pass = prompt("Enter Admin Key:");
-    if(pass === "tanish123") { 
-        document.getElementById('admin-scr').classList.add('active'); 
-    } else { 
-        alert("Wrong Key!"); 
+    } else {
+        document.getElementById('auth-scr').style.display = 'flex';
+        document.getElementById('main-dash').style.display = 'none';
     }
+});
+
+function openScreen(id) { document.getElementById(id).classList.add('active'); }
+function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
+
+function startDVT() { openScreen('dvt-scr'); resetGame(); runTimer(); }
+function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
+
+function runTimer() {
+    let t = 10; canBet = true;
+    document.getElementById('msg').innerText = "Place Your Bets!";
+    gameInterval = setInterval(() => {
+        t--; document.getElementById('d-timer').innerText = t;
+        if(t <= 0) { clearInterval(gameInterval); showWinner(); }
+    }, 1000);
 }
-// --- User Withdrawal Logic ---
+
+function bet(side) {
+    if(!canBet) return;
+    if(wallet < 10) return alert("Minimum ₹10 chahiye!");
+    wallet -= 10; myBets[side] += 10;
+    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
+    document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
+}
+
+function showWinner() {
+    canBet = false;
+    document.getElementById('msg').innerText = "Calculating...";
+    setTimeout(() => {
+        const d = Math.floor(Math.random()*13) + 1;
+        const t = Math.floor(Math.random()*13) + 1;
+        document.getElementById('c-d').innerText = d;
+        document.getElementById('c-t').innerText = t;
+        let win = (d > t) ? "Dragon" : "Tiger";
+        document.getElementById('msg').innerText = win.toUpperCase() + " WINS!";
+        if(myBets[win] > 0) {
+            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
+            alert("You Won!");
+        }
+        setTimeout(() => { resetGame(); runTimer(); }, 3000);
+    }, 1000);
+}
+
+function resetGame() {
+    myBets = { Dragon: 0, Tiger: 0 };
+    document.getElementById('b-d').innerText = "₹0"; document.getElementById('b-t').innerText = "₹0";
+    document.getElementById('c-d').innerText = "?"; document.getElementById('c-t').innerText = "?";
+}
+
+// ADMIN & WITHDRAW LOGIC
+function openAdmin() {
+    let p = prompt("Admin Key:");
+    if(p === "tanish123") openScreen('admin-scr');
+}
+
+function updateUserBal() {
+    const ph = document.getElementById('adm-ph').value;
+    const amt = parseInt(document.getElementById('adm-amt').value);
+    db.collection("wallets").where("phone","==",ph).get().then(s => {
+        if(s.empty) return alert("User Not Found");
+        db.collection("wallets").doc(s.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
+        alert("Done!");
+    });
+}
+
 function openWithdraw() {
-    if(wallet < 200) return alert("Bhai, kam se kam ₹200 balance chahiye!");
+    if(wallet < 200) return alert("Min ₹200 chahiye!");
     document.getElementById('wit-modal').style.display = 'flex';
 }
 
 function sendWithdrawReq() {
     const upi = document.getElementById('wit-upi').value;
     const amt = parseInt(document.getElementById('wit-amt').value);
-
-    if(!upi || isNaN(amt) || amt < 200) return alert("Sahi UPI ID aur amount (min 200) dalo!");
-    if(amt > wallet) return alert("Wallet mein itne paise nahi hain!");
-
-    // Wallet se paise kaat lo
-    db.collection("wallets").doc(auth.currentUser.uid).update({
-        balance: firebase.firestore.FieldValue.increment(-amt)
-    });
-
-    // Database mein withdrawal entry dalo
-    db.collection("withdrawals").add({
-        uid: auth.currentUser.uid,
-        phone: document.getElementById('m-phone').value || "User",
-        upi: upi,
-        amount: amt,
-        status: "Pending",
-        timestamp: new Date()
-    }).then(() => {
-        alert("Request bhej di gayi! Admin 24h mein check karega.");
-        document.getElementById('wit-modal').style.display = 'none';
-    });
+    if(!upi || amt < 200) return alert("Sahi details dalo!");
+    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet - amt });
+    db.collection("withdrawals").add({ phone: "User", upi: upi, amount: amt, status: "Pending", time: new Date() });
+    alert("Request Sent!");
+    document.getElementById('wit-modal').style.display = 'none';
 }
+</scrip
+    // Configuration aur Logic yahan se shuru
+    const firebaseConfig = {
+        apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
+        authDomain: "my-insta-backend.firebaseapp.com",
+        projectId: "my-insta-backend",
+        storageBucket: "my-insta-backend.firebasestorage.app",
+        messagingSenderId: "955106968523",
+        appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-function updateUserBal() {
-    const ph = document.getElementById('adm-ph').value;
-    const amt = parseInt(document.getElementById('adm-amt').value);
-    
-    if(!ph || isNaN(amt)) return alert("Details sahi dalo!");
+    let wallet = 0;
+    let myBets = { Dragon: 0, Tiger: 0 };
+    let canBet = false;
+    let gameInterval;
 
-    db.collection("wallets").where("phone", "==", ph).get().then(snap => {
-        if(snap.empty) return alert("User Nahi Mila!");
-        let uid = snap.docs[0].id;
-        db.collection("wallets").doc(uid).update({
-            balance: firebase.firestore.FieldValue.increment(amt)
-        }).then(() => {
-            alert("Paisa Update Ho Gaya!");
-            document.getElementById('adm-status').innerText = "Done!";
-        });
-    });
-}
-
-            
-        function bet(side) {
-            if(!canBet) return;
-            if(wallet < 10) return alert("Minimum ₹10 chahiye!");
-            wallet -= 10;
-            myBets[side] += 10;
-            db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
-            document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
+    function handleMobileAuth(type) {
+        const phone = document.getElementById('m-phone').value;
+        const pass = document.getElementById('m-pass').value;
+        if(phone.length < 10 || pass.length < 6) return alert("Sahi Details dalo!");
+        const fakeEmail = phone + "@wincash.com";
+        if(type === 'reg') {
+            auth.createUserWithEmailAndPassword(fakeEmail, pass).then(u => {
+                db.collection("wallets").doc(u.user.uid).set({ balance: 50, phone: phone, uid: u.user.uid });
+                alert("Account Created! ₹50 Bonus Mila.");
+            }).catch(e => alert(e.message));
+        } else {
+            auth.signInWithEmailAndPassword(fakeEmail, pass).catch(e => alert("Login Fail: " + e.message));
         }
+    }
 
-        function showWinner() {
-            canBet = false;
-            document.getElementById('msg').innerText = "Calculating...";
-            setTimeout(() => {
-                const d = Math.floor(Math.random()*13) + 1;
-                const t = Math.floor(Math.random()*13) + 1;
-                document.getElementById('c-d').innerText = d;
-                document.getElementById('c-t').innerText = t;
-
-                let win = (d > t) ? "Dragon" : "Tiger";
-                document.getElementById('msg').innerText = win.toUpperCase() + " WINS!";
-
-                if(myBets[win] > 0) {
-                    db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
-                    alert("You Won!");
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            document.getElementById('auth-scr').style.display = 'none';
+            document.getElementById('main-dash').style.display = 'block';
+            db.collection("wallets").doc(user.uid).onSnapshot(doc => {
+                if(doc.exists) {
+                    wallet = doc.data().balance;
+                    document.getElementById('bal-dash').innerText = wallet;
+                    document.getElementById('bal-game').innerText = wallet;
+                    document.getElementById('bal-wall').innerText = "₹" + wallet;
                 }
-                setTimeout(() => { resetGame(); runTimer(); }, 3000);
-            }, 1000);
+            });
+        } else {
+            document.getElementById('auth-scr').style.display = 'flex';
+            document.getElementById('main-dash').style.display = 'none';
         }
+    });
 
-        function resetGame() {
-            myBets = { Dragon: 0, Tiger: 0 };
-            document.getElementById('b-d').innerText = "₹0";
-            document.getElementById('b-t').innerText = "₹0";
-            document.getElementById('c-d').innerText = "?";
-            document.getElementById('c-t').innerText = "?";
-        }
-    </script>
+    function openScreen(id) { document.getElementById(id).classList.add('active'); }
+    function closeScreen(id) { document.getElementById(id).classList.remove('active'); }
+    function startDVT() { openScreen('dvt-scr'); resetGame(); runTimer(); }
+    function closeDVT() { closeScreen('dvt-scr'); clearInterval(gameInterval); }
+
+    function runTimer() {
+        let t = 10; canBet = true;
+        document.getElementById('d-timer').innerText = t;
+        gameInterval = setInterval(() => {
+            t--; document.getElementById('d-timer').innerText = t;
+            if(t <= 0) { clearInterval(gameInterval); showWinner(); }
+        }, 1000);
+    }
+
+    function bet(side) {
+        if(!canBet || wallet < 10) return alert("Min ₹10 chahiye!");
+        wallet -= 10; myBets[side] += 10;
+        db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet });
+        document.getElementById('b-' + side[0].toLowerCase()).innerText = "₹" + myBets[side];
+    }
+
+    function showWinner() {
+        canBet = false;
+        const d = Math.floor(Math.random()*13) + 1;
+        const t = Math.floor(Math.random()*13) + 1;
+        document.getElementById('c-d').innerText = d;
+        document.getElementById('c-t').innerText = t;
+        let win = (d > t) ? "Dragon" : "Tiger";
+        if(myBets[win] > 0) db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet + (myBets[win]*2) });
+        setTimeout(() => { resetGame(); runTimer(); }, 3000);
+    }
+
+    function resetGame() {
+        myBets = { Dragon: 0, Tiger: 0 };
+        document.getElementById('b-d').innerText = "₹0"; document.getElementById('b-t').innerText = "₹0";
+        document.getElementById('c-d').innerText = "?"; document.getElementById('c-t').innerText = "?";
+    }
+
+    function openAdmin() {
+        let p = prompt("Admin Key:");
+        if(p === "tanish123") openScreen('admin-scr');
+    }
+
+    function updateUserBal() {
+        const ph = document.getElementById('adm-ph').value;
+        const amt = parseInt(document.getElementById('adm-amt').value);
+        db.collection("wallets").where("phone","==",ph).get().then(s => {
+            if(s.empty) return alert("User Not Found");
+            db.collection("wallets").doc(s.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
+            alert("Done!");
+        });
+    }
+
+    function openWithdraw() {
+        if(wallet < 200) return alert("Min ₹200 chahiye!");
+        document.getElementById('wit-modal').style.display = 'flex';
+    }
+
+    function sendWithdrawReq() {
+        const upi = document.getElementById('wit-upi').value;
+        const amt = parseInt(document.getElementById('wit-amt').value);
+        if(!upi || amt < 200) return alert("Sahi details dalo!");
+        db.collection("wallets").doc(auth.currentUser.uid).update({ balance: wallet - amt });
+        db.collection("withdrawals").add({ phone: "User", upi: upi, amount: amt, status: "Pending", time: new Date() });
+        alert("Request Sent!");
+        document.getElementById('wit-modal').style.display = 'none';
+    }
+</script>
 </body>
 </html>
+
+                
 
