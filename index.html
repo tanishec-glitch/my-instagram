@@ -1,45 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Instagram Clone</title>
+    <title>Instagram Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; margin: 0; background: #fafafa; padding-bottom: 60px; }
-        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .header h2 { margin: 0; font-style: italic; }
-        .post { background: white; border: 1px solid #dbdbdb; margin: 20px auto; max-width: 400px; }
-        .user-info { padding: 10px; font-weight: bold; }
-        .post-img { width: 100%; height: auto; display: block; }
-        .post-actions { padding: 10px; font-size: 24px; cursor: pointer; }
-        /* This makes the heart turn red when clicked */
-        .liked { color: red !important; transform: scale(1.2); }
-        .footer { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 20px; }
+        body { font-family: sans-serif; margin: 0; background: #fafafa; }
+        
+        /* LOGIN SCREEN STYLES */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 1000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .login-box { width: 80%; max-width: 300px; text-align: center; }
+        .logo { font-style: italic; font-size: 35px; margin-bottom: 30px; }
+        input { 
+            width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #dbdbdb; 
+            background: #fafafa; border-radius: 5px; outline: none; box-sizing: border-box;
+        }
+        button { 
+            width: 100%; padding: 12px; background: #0095f6; color: white; 
+            border: none; border-radius: 5px; font-weight: bold; margin-top: 15px;
+        }
+
+        /* APP STYLES (HIDDEN UNTIL LOGIN) */
+        #main-app { display: none; padding-bottom: 70px; }
+        .header { background: white; border-bottom: 1px solid #dbdbdb; padding: 12px; text-align: center; position: sticky; top: 0; font-style: italic; }
+        .post { background: white; border: 1px solid #dbdbdb; margin: 15px auto; max-width: 450px; }
+        .post-img { width: 100%; display: block; }
+        .footer { background: white; border-top: 1px solid #dbdbdb; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; font-size: 26px; }
     </style>
 </head>
 <body>
-    <div class="header"><h2>Instagram</h2></div>
 
-    <div class="post">
-        <div class="user-info">tanishec_glitch</div>
-        <img src="https://picsum.photos/400/400?random=1" class="post-img">
-        <div class="post-actions">
-            <span id="heart1" onclick="toggleLike('heart1')">🤍</span> 💬 ✈️
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="logo">Instagram</div>
+            <input type="text" id="username" placeholder="Phone number, username, or email">
+            <input type="password" placeholder="Password">
+            <button onclick="checkLogin()">Log In</button>
+            <p id="error" style="color:red; font-size: 12px; display: none;">Invalid username. Try "tanish".</p>
         </div>
     </div>
 
-    <div class="footer">
-        <span>🏠</span><span>🔍</span><span>➕</span><span>❤️</span><span>👤</span>
+    <div id="main-app">
+        <div class="header" id="header-user">Instagram</div>
+        <div class="post">
+            <div style="padding:10px; font-weight:bold;">tanishec_glitch</div>
+            <img src="https://picsum.photos/500/500?random=5" class="post-img">
+        </div>
+        <div class="footer">
+            <span>🏠</span><span>🔍</span><span>➕</span><span>❤️</span><span>👤</span>
+        </div>
     </div>
 
     <script>
-        // This is the "brain" that changes the heart
-        function toggleLike(id) {
-            let heart = document.getElementById(id);
-            if (heart.innerHTML === "🤍") {
-                heart.innerHTML = "❤️";
-                heart.classList.add('liked');
+        function checkLogin() {
+            const user = document.getElementById('username').value.toLowerCase();
+            const login = document.getElementById('login-screen');
+            const app = document.getElementById('main-app');
+            const error = document.getElementById('error');
+
+            // Logic: Only let them in if they type "tanish" or "admin"
+            if (user === "tanish" || user === "admin") {
+                login.style.display = "none";
+                app.style.display = "block";
+                document.getElementById('header-user').innerText = "Welcome, " + user;
             } else {
-                heart.innerHTML = "🤍";
-                heart.classList.remove('liked');
+                error.style.display = "block";
             }
         }
     </script>
