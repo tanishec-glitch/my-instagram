@@ -1,33 +1,80 @@
-    <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Ludo Pro Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo Master Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore-compat.js"></script>
+    
     <style>
-        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; }
-        #board { width: 300px; height: 300px; margin: 20px auto; border: 5px solid #ecf0f1; position: relative; background: #fff; display: grid; grid-template-columns: repeat(3, 1fr); }
-        .zone { border: 1px solid #ccc; height: 100px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
-        .red { background: #ff4d4d; } .blue { background: #4d94ff; }
-        #dice-btn { padding: 15px 30px; font-size: 20px; cursor: pointer; background: #27ae60; color: white; border: none; border-radius: 5px; }
-        #status { margin-top: 20px; font-size: 1.2em; }
+        :root { --red: #ff4d4d; --blue: #2e86de; --green: #2ecc71; --yellow: #f1c40f; --gold: #ffd700; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #091e42; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* --- TOP UI BAR --- */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(0,0,0,0.4); border-bottom: 2px solid var(--gold); }
+        .currency-box { display: flex; gap: 10px; }
+        .stat { background: #000; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--gold); font-weight: bold; font-size: 0.9rem; }
+
+        /* --- LUDO BOARD --- */
+        #game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        #ludo-board { 
+            display: grid; 
+            grid-template-columns: repeat(15, 1fr); 
+            grid-template-rows: repeat(15, 1fr); 
+            width: 95vw; height: 95vw; max-width: 400px; max-height: 400px;
+            background: #fff; border: 4px solid var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .cell { border: 0.1px solid #ddd; box-sizing: border-box; }
+        
+        /* Base Colors */
+        .r-bg { background-color: var(--red); }
+        .b-bg { background-color: var(--blue); }
+        .g-bg { background-color: var(--green); }
+        .y-bg { background-color: var(--yellow); }
+        .safe { background-color: #bdc3c7; position: relative; }
+        .safe::after { content: '⭐'; font-size: 0.6rem; position: absolute; top: 2px; left: 2px; }
+
+        /* --- CONTROLS --- */
+        .controls { padding: 20px; display: flex; gap: 10px; justify-content: center; }
+        #dice-btn { background: var(--green); color: white; border: none; padding: 15px 40px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 0 #1b8a4d; }
+        #dice-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { display: flex; justify-content: space-around; background: #051937; padding: 10px 0; border-top: 1px solid #334155; }
+        .nav-item { font-size: 0.7rem; text-align: center; opacity: 0.7; }
     </style>
 </head>
 <body>
 
-    <h1>Ludo Multiplayer Test</h1>
-    <div id="board">
-        <div class="zone red">RED BASE</div>
-        <div class="zone">PATH</div>
-        <div class="zone blue">BLUE BASE</div>
+    <div class="top-nav">
+        <div style="display:flex; align-items:center; gap:8px">
+            <div style="width:35px; height:35px; background:#fff; border-radius:50%"></div>
+            <span>GUEST_77</span>
+        </div>
+        <div class="currency-box">
+            <div class="stat">💎 <span id="gems">66</span></div>
+            <div class="stat">🪙 <span id="coins">4,950</span></div>
+        </div>
     </div>
 
-    <div id="status">Current Turn: <span id="turn-display">Loading...</span></div>
-    <h2 id="dice-result">Dice: -</h2>
-    <button id="dice-btn">ROLL DICE</button>
+    <div id="game-area">
+        <div id="ludo-board"></div>
+        <div id="dice-display" style="margin-top:15px; font-size:1.5rem">Dice: <span id="dice-val">?</span></div>
+    </div>
+
+    <div class="controls">
+        <button id="dice-btn" onclick="rollDice()">ROLL DICE</button>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item">🏠<br>HOME</div>
+        <div class="nav-item">🎲<br>INVENTORY</div>
+        <div class="nav-item">👥<br>SOCIAL</div>
+    </div>
 
     <script>
-        // 1. YOUR FIREBASE CONFIG (Paste from Console)
+        // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -39,48 +86,49 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const gameRef = db.collection("games").doc("test-game");
 
-        // 2. INITIALIZE GAME DATA
-        async function initGame() {
-            const doc = await gameRef.get();
-            if (!doc.exists) {
-                await gameRef.set({
-                    turn: "red",
-                    diceValue: 0,
-                    lastRollTime: Date.now()
-                });
-            }
+        // --- 2. GENERATE BOARD ---
+        const board = document.getElementById('ludo-board');
+        for (let i = 0; i < 225; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            
+            // Logic to color bases (simplistic version)
+            const row = Math.floor(i / 15);
+            const col = i % 15;
+
+            if (row < 6 && col < 6) cell.classList.add('r-bg');
+            if (row < 6 && col > 8) cell.classList.add('g-bg');
+            if (row > 8 && col < 6) cell.classList.add('b-bg');
+            if (row > 8 && col > 8) cell.classList.add('y-bg');
+            
+            board.appendChild(cell);
         }
 
-        // 3. LISTEN FOR REAL-TIME UPDATES (The "Sync" Magic)
-        gameRef.onSnapshot((doc) => {
-            const data = doc.data();
-            document.getElementById("turn-display").innerText = data.turn.toUpperCase();
-            document.getElementById("dice-result").innerText = "Dice: " + data.diceValue;
+        // --- 3. DICE & FIREBASE SYNC ---
+        async function rollDice() {
+            const val = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice-val').innerText = val;
             
-            // Visual feedback for turn
-            document.getElementById("turn-display").style.color = data.turn;
-        });
+            // Update Firebase (Assuming you have a 'games/test' doc)
+            try {
+                await db.collection("games").doc("current_game").set({
+                    lastRoll: val,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } catch(e) { console.log("Firebase not connected yet: ", e); }
+        }
 
-        // 4. ROLL LOGIC
-        document.getElementById("dice-btn").onclick = async () => {
-            const newValue = Math.floor(Math.random() * 6) + 1;
-            const currentDoc = await gameRef.get();
-            const currentTurn = currentDoc.data().turn;
-
-            // Switch turns
-            const nextTurn = currentTurn === "red" ? "blue" : "red";
-
-            await gameRef.update({
-                diceValue: newValue,
-                turn: nextTurn,
-                lastRollTime: Date.now()
+        // --- 4. REAL-TIME CURRENCY SYNC ---
+        function listenToUser(userId) {
+            db.collection("users").doc(userId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    document.getElementById('coins').innerText = doc.data().coins;
+                    document.getElementById('gems').innerText = doc.data().gems;
+                }
             });
-        };
-
-        initGame();
+        }
+        // listenToUser('user_test'); // Uncomment when user exists in DB
     </script>
 </body>
 </html>
-    
