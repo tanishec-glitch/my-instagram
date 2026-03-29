@@ -3,88 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WhatsApp Pro Max v10</title>
+    <title>WhatsApp Pro Max v11</title>
     <style>
         :root { 
-            --wa-bg: #0b141a; --wa-header: rgba(17, 27, 33, 0.85); --wa-text: white; 
+            --wa-bg: #0b141a; --wa-header: #111b21; --wa-text: white; 
             --wa-accent: #25d366; --wa-dim: #8696a0; --wa-sent: #005c4b; --wa-recv: #202c33;
         }
+        .light-mode {
+            --wa-bg: #f0f2f5; --wa-header: #ffffff; --wa-text: #111b21;
+            --wa-sent: #dcf8c6; --wa-recv: #ffffff; --wa-dim: #667781;
+        }
         * { box-sizing: border-box; transition: all 0.3s ease; }
-        body { margin: 0; background: var(--wa-bg); color: var(--wa-text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { margin: 0; background: var(--wa-bg); color: var(--wa-text); font-family: sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* GLASS EFFECT */
-        .glass { backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); background: var(--wa-header); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .top-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: var(--wa-header); border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; }
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { display: flex; padding: 15px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; position: relative; }
+        .avatar { width: 50px; height: 50px; background: var(--wa-accent); border-radius: 50%; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #0b141a; font-weight: bold; }
 
-        #app-screen, #chat-window { display: none; height: 100%; flex-direction: column; width: 100%; }
-        #auth-screen { height: 100%; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #0b141a 0%, #005c4b 100%); }
+        #chat-window { position: fixed; top: 0; left: 0; z-index: 1000; background: var(--wa-bg); width: 100%; height: 100%; display: none; flex-direction: column; }
+        #msg-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; padding-bottom: 100px; }
         
-        .input-field { width: 300px; padding: 15px; margin: 10px 0; border-radius: 12px; border: none; background: rgba(255,255,255,0.1); color: white; outline: none; }
-        .btn { width: 300px; padding: 15px; background: var(--wa-accent); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: #0b141a; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); }
+        .msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .sent { background: var(--wa-sent); align-self: flex-end; border-top-right-radius: 0; color: white; }
+        .recv { background: var(--wa-recv); align-self: flex-start; border-top-left-radius: 0; color: var(--wa-text); }
 
-        .top-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; }
-        .chat-list { flex: 1; overflow-y: auto; padding-top: 5px; }
-        .chat-item { display: flex; padding: 15px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .chat-item:active { background: rgba(255,255,255,0.05); }
-        .avatar { width: 50px; height: 50px; background: linear-gradient(45deg, #25d366, #005c4b); border-radius: 50%; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; font-weight: bold; }
-
-        #chat-window { position: fixed; top: 0; left: 0; z-index: 1000; background: var(--wa-bg); }
-        #msg-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; padding-bottom: 110px; scroll-behavior: smooth; }
+        .type-area { position: absolute; bottom: 0; width: 100%; padding: 15px 15px 35px 15px; background: var(--wa-header); display: flex; gap: 10px; align-items: center; }
+        .msg-input { flex: 1; padding: 14px 20px; border-radius: 30px; border: none; background: rgba(255,255,255,0.1); color: var(--wa-text); outline: none; }
+        .send-btn { width: 50px; height: 50px; background: var(--wa-accent); border: none; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        .msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 15px; position: relative; color: white; animation: fadeIn 0.3s ease; line-height: 1.4; }
-        .sent { background: var(--wa-sent); align-self: flex-end; border-top-right-radius: 0; }
-        .recv { background: var(--wa-recv); align-self: flex-start; border-top-left-radius: 0; }
-        
-        /* IMAGE PREVIEW */
-        .chat-img { max-width: 100%; border-radius: 8px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); }
-
-        /* HEART POP ANIMATION */
-        @keyframes heartPop { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
-        .heart-anim { position: absolute; font-size: 30px; animation: heartPop 0.8s ease-out forwards; pointer-events: none; z-index: 10; }
-        .heart-icon { position: absolute; bottom: -8px; right: 5px; font-size: 14px; background: #202c33; border-radius: 10px; padding: 2px 4px; }
-
-        .type-area { position: absolute; bottom: 0; width: 100%; padding: 15px 15px 35px 15px; background: var(--wa-header); backdrop-filter: blur(10px); display: flex; gap: 12px; align-items: center; }
-        .msg-input { flex: 1; padding: 14px 20px; border-radius: 30px; border: none; background: rgba(255,255,255,0.1); color: white; outline: none; font-size: 16px; }
-        .send-btn { width: 52px; height: 52px; background: var(--wa-accent); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #0b141a; cursor: pointer; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .edit-name-btn { position: absolute; right: 15px; font-size: 12px; color: var(--wa-accent); border: 1px solid var(--wa-accent); padding: 2px 8px; border-radius: 10px; }
+        .btn { width: 100%; padding: 12px; background: var(--wa-accent); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-    <div id="auth-screen">
-        <div style="text-align: center;">
-            <h1 style="color:var(--wa-accent); font-size: 45px; margin-bottom: 5px;">WhatsApp</h1>
-            <p style="color:var(--wa-dim); margin-bottom: 30px;">Premium v10.0</p>
-            <input type="email" id="email" class="input-field" placeholder="Email"><br>
-            <input type="password" id="pass" class="input-field" placeholder="Password"><br>
-            <button class="btn" onclick="handleAuth()">GET STARTED</button>
+    <div id="auth-screen" style="height:100%; display:flex; justify-content:center; align-items:center;">
+        <div style="text-align:center;">
+            <h1 style="color:var(--wa-accent)">WhatsApp v11</h1>
+            <input type="email" id="email" style="width:280px; padding:12px; margin:5px; border-radius:8px; border:none;" placeholder="Email"><br>
+            <input type="password" id="pass" style="width:280px; padding:12px; margin:5px; border-radius:8px; border:none;" placeholder="Password"><br>
+            <button class="btn" onclick="handleAuth()" style="width:280px;">LOGIN / SIGNUP</button>
         </div>
     </div>
 
     <div id="app-screen">
-        <div class="top-nav glass">
-            <b style="font-size: 20px;">WhatsApp Lite</b>
+        <div class="top-nav">
+            <b style="font-size: 18px;">WhatsApp Lite</b>
             <div style="display:flex; gap:15px; align-items:center;">
-                <span onclick="changeWallpaper()" style="cursor:pointer; font-size:20px;">🖼️</span>
-                <span onclick="auth.signOut()" style="color:var(--wa-accent); font-weight:bold; cursor:pointer;">LOGOUT</span>
+                <span onclick="toggleTheme()" style="cursor:pointer; font-size:20px;" id="theme-icon">🌙</span>
+                <span onclick="auth.signOut()" style="color:var(--wa-accent); font-size:12px; font-weight:bold;">LOGOUT</span>
             </div>
         </div>
-        <div style="padding:15px;"><button class="btn" style="width:100%" onclick="sendRequest()">+ ADD NEW FRIEND</button></div>
+        <div style="padding:15px;"><button class="btn" onclick="addFriend()">+ ADD FRIEND</button></div>
         <div class="chat-list" id="contacts"></div>
     </div>
 
     <div id="chat-window">
-        <div class="top-nav glass">
+        <div class="top-nav">
             <div style="display:flex; align-items:center; gap:12px;">
-                <span onclick="backToHome()" style="font-size: 26px; cursor:pointer;">←</span>
-                <div class="avatar" style="width:38px; height:38px;">👤</div>
-                <div id="chat-with-name" style="font-size:16px; font-weight:bold;">Chat</div>
+                <span onclick="backHome()" style="font-size:24px; cursor:pointer;">←</span>
+                <div class="avatar" style="width:35px; height:35px;" id="chat-avatar">?</div>
+                <b id="chat-title">Chat</b>
             </div>
-            <span onclick="clearChat()" style="color:#ff4d4d; font-size:12px; font-weight:bold; cursor:pointer;">CLEAR CHAT</span>
         </div>
         <div id="msg-box"></div>
         <div class="type-area">
-            <input type="text" id="m-input" class="msg-input" placeholder="Type a message...">
+            <input type="text" id="m-input" class="msg-input" placeholder="Type message...">
             <button class="send-btn" onclick="sendMsg()">➤</button>
         </div>
     </div>
@@ -99,55 +84,60 @@
         let activeChat = "";
 
         function handleAuth() { const e = document.getElementById('email').value, p = document.getElementById('pass').value; auth.signInWithEmailAndPassword(e, p).catch(() => auth.createUserWithEmailAndPassword(e, p)); }
-        auth.onAuthStateChanged(user => { document.getElementById('auth-screen').style.display = user ? 'none' : 'flex'; document.getElementById('app-screen').style.display = user ? 'flex' : 'none'; if(user) loadData(); });
+        
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('theme-icon').innerText = isLight ? "☀️" : "🌙";
+        }
 
-        function loadData() {
+        auth.onAuthStateChanged(user => {
+            document.getElementById('auth-screen').style.display = user ? 'none' : 'flex';
+            document.getElementById('app-screen').style.display = user ? 'flex' : 'none';
+            if(user) loadFriends();
+        });
+
+        function loadFriends() {
             const myID = btoa(auth.currentUser.email).replace(/[/=]/g, "");
             db.ref(`friends/${myID}`).on('value', snap => {
                 const list = document.getElementById('contacts'); list.innerHTML = "";
                 snap.forEach(child => {
-                    const fEmail = child.val().email; const div = document.createElement('div');
-                    div.className = "chat-item"; div.innerHTML = `<div class="avatar">${fEmail[0].toUpperCase()}</div><div><b>${fEmail}</b><br><small style="color:var(--wa-dim)">Tap to start chatting</small></div>`;
-                    div.onclick = () => openChat(fEmail); list.appendChild(div);
+                    const data = child.val();
+                    const displayName = data.nickname || data.email;
+                    const div = document.createElement('div');
+                    div.className = "chat-item";
+                    div.innerHTML = `<div class="avatar">${displayName[0].toUpperCase()}</div>
+                                     <div onclick="openChat('${data.email}', '${displayName}')"><b>${displayName}</b><br><small style="color:var(--wa-dim)">${data.email}</small></div>
+                                     <span class="edit-name-btn" onclick="setNickname('${child.key}', '${data.email}')">Edit Name</span>`;
+                    list.appendChild(div);
                 });
             });
         }
 
-        function openChat(email) {
-            activeChat = email; document.getElementById('chat-window').style.display = 'flex';
-            document.getElementById('chat-with-name').innerText = email;
+        function setNickname(key, email) {
+            const newName = prompt("Enter Nickname for " + email + ":");
+            if(!newName) return;
+            const myID = btoa(auth.currentUser.email).replace(/[/=]/g, "");
+            db.ref(`friends/${myID}/${key}`).update({ nickname: newName });
+        }
+
+        function openChat(email, name) {
+            activeChat = email;
+            document.getElementById('chat-window').style.display = 'flex';
+            document.getElementById('chat-title').innerText = name;
+            document.getElementById('chat-avatar').innerText = name[0].toUpperCase();
             const chatID = [auth.currentUser.email, email].sort().join("").replace(/[@.]/g, "");
             db.ref(`chats/${chatID}`).on('value', snap => {
                 const box = document.getElementById('msg-box'); box.innerHTML = "";
                 snap.forEach(m => {
-                    const data = m.val(); const isMe = data.sender === auth.currentUser.email;
-                    const d = document.createElement('div'); d.className = `msg ${isMe ? 'sent' : 'recv'}`;
-                    
-                    let content = data.text;
-                    if(content.startsWith('http')) content = `<img src="${content}" class="chat-img"><br>${content}`;
-                    
-                    d.innerHTML = `${content} ${data.heart ? '<span class="heart-icon">❤️</span>' : ''} <div style="font-size:9px; opacity:0.6; text-align:right; margin-top:5px;">${new Date(data.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>`;
-                    
-                    // DOUBLE TAP HEART ANIMATION
-                    let lastTap = 0;
-                    d.addEventListener('touchstart', (e) => {
-                        let now = Date.now();
-                        if(now - lastTap < 300) {
-                            showHeartAnim(e.touches[0].clientX, e.touches[0].clientY);
-                            db.ref(`chats/${chatID}/${m.key}/heart`).set(!data.heart);
-                        }
-                        lastTap = now;
-                    });
+                    const d = document.createElement('div');
+                    const isMe = m.val().sender === auth.currentUser.email;
+                    d.className = `msg ${isMe ? 'sent' : 'recv'}`;
+                    d.innerText = m.val().text;
                     box.appendChild(d);
                 });
                 box.scrollTop = box.scrollHeight;
             });
-        }
-
-        function showHeartAnim(x, y) {
-            const h = document.createElement('div'); h.className = 'heart-anim'; h.innerText = '❤️';
-            h.style.left = x + 'px'; h.style.top = y + 'px'; document.body.appendChild(h);
-            setTimeout(() => h.remove(), 800);
         }
 
         function sendMsg() {
@@ -157,15 +147,15 @@
             i.value = "";
         }
 
-        function changeWallpaper() {
-            const url = prompt("Enter Image URL for Wallpaper:");
-            if(url) document.getElementById('msg-box').style.backgroundImage = `url('${url}')`;
+        function addFriend() {
+            const email = prompt("Friend's Email:"); if(!email) return;
+            const myID = btoa(auth.currentUser.email).replace(/[/=]/g, "");
+            const tID = btoa(email).replace(/[/=]/g, "");
+            db.ref(`friends/${myID}/${tID}`).set({ email: email });
+            db.ref(`friends/${tID}/${myID}`).set({ email: auth.currentUser.email });
         }
 
-        function sendRequest() { const email = prompt("Friend's Email:"); if(!email) return; const myID = btoa(auth.currentUser.email).replace(/[/=]/g, ""); const tID = btoa(email).replace(/[/=]/g, ""); db.ref(`friends/${myID}/${tID}`).set({email:email}); db.ref(`friends/${tID}/${myID}`).set({email:auth.currentUser.email}); }
-        function backToHome() { document.getElementById('chat-window').style.display = 'none'; }
-        function clearChat() { if(confirm("Clear history?")) { const chatID = [auth.currentUser.email, activeChat].sort().join("").replace(/[@.]/g, ""); db.ref(`chats/${chatID}`).remove(); } }
+        function backHome() { document.getElementById('chat-window').style.display = 'none'; }
     </script>
 </body>
 </html>
-  
