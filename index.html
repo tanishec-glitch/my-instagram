@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WhatsApp Pro Max</title>
+    <title>WhatsApp Pro Max v3</title>
     <style>
         :root { --wa-bg: #0b141a; --wa-accent: #25d366; --wa-dim: #8696a0; --wa-header: #111b21; --wa-sent: #005c4b; }
         * { box-sizing: border-box; }
@@ -18,7 +18,11 @@
         .top-nav { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: var(--wa-header); font-weight: bold; flex-shrink: 0; border-bottom: 1px solid #202c33; z-index: 10; }
         .chat-list { flex: 1; overflow-y: auto; }
         .chat-item { display: flex; padding: 15px; align-items: center; border-bottom: 0.5px solid #202c33; cursor: pointer; }
-        .avatar { width: 42px; height: 42px; background: #3d474c; border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
+        .avatar { width: 42px; height: 42px; background: #3d474c; border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        
+        .status-dot { font-size: 10px; margin-right: 4px; }
+        .online { color: var(--wa-accent); }
+        .offline { color: var(--wa-dim); }
 
         #chat-window { position: fixed; top: 0; left: 0; z-index: 1000; background: var(--wa-bg); }
         #msg-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 6px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; padding-bottom: 100px; }
@@ -33,8 +37,6 @@
         .type-area { position: absolute; bottom: 0; width: 100%; padding: 10px 12px 30px 12px; background: var(--wa-header); display: flex; gap: 10px; align-items: center; }
         .msg-input { flex: 1; padding: 12px 18px; border-radius: 25px; border: none; background: #2a3942; color: white; outline: none; font-size: 16px; }
         .send-btn { width: 48px; height: 48px; background: var(--wa-accent); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #0b141a; }
-
-        .request-box { background: #1c2a33; margin: 10px; padding: 15px; border-radius: 12px; border: 1px solid var(--wa-accent); }
     </style>
 </head>
 <body>
@@ -42,19 +44,23 @@
     <div id="auth-screen">
         <div>
             <h1 style="color: var(--wa-accent); font-size: 35px; margin:0;">WhatsApp</h1>
-            <p style="color: var(--wa-dim)">V.Final Pro Max</p><br>
+            <p style="color: var(--wa-dim)">v3.0 Online Status</p><br>
             <input type="email" id="email" class="input-field" placeholder="Email Address">
             <input type="password" id="pass" class="input-field" placeholder="Password">
-            <button class="btn" onclick="handleAuth()">ENTER CHAT</button>
+            <button class="btn" onclick="handleAuth()">LOGIN / JOIN</button>
         </div>
     </div>
 
     <div id="app-screen">
         <div class="top-nav">
             <span>WhatsApp Lite</span>
-            <span onclick="auth.signOut()" style="color:var(--wa-accent); font-size:12px;">LOGOUT</span>
+            <span onclick="auth.signOut()" style="color:var(--wa-accent); font-size:12px; cursor:pointer;">LOGOUT</span>
         </div>
-        <div style="padding: 12px;"><button class="btn" style="width: 100%;" onclick="sendRequest()">+ ADD NEW FRIEND</button></div>
+        <div style="padding: 12px; display: flex; gap: 8px;">
+            <input type="text" id="my-bio" class="input-field" style="margin:0; flex:1;" placeholder="Set your status (e.g. Busy)">
+            <button class="btn" style="width: 70px; padding: 10px;" onclick="updateBio()">SET</button>
+        </div>
+        <div style="padding: 0 12px 10px 12px;"><button class="btn" style="width: 100%; background: #202c33; color:white;" onclick="sendRequest()">+ ADD FRIEND</button></div>
         <div id="requests-area"></div>
         <div class="chat-list" id="contacts"></div>
     </div>
@@ -64,7 +70,10 @@
             <div style="display:flex; align-items:center; gap:10px;">
                 <span onclick="backToHome()" style="font-size: 24px;">←</span>
                 <div class="avatar" style="width:32px; height:32px;">👤</div>
-                <span id="chat-with-name">Chat</span>
+                <div>
+                    <div id="chat-with-name" style="font-size:14px;">Chat</div>
+                    <div id="chat-status" style="font-size:10px;">offline</div>
+                </div>
             </div>
         </div>
         <div id="msg-box"></div>
@@ -101,8 +110,22 @@
         auth.onAuthStateChanged(user => {
             document.getElementById('auth-screen').style.display = user ? 'none' : 'flex';
             document.getElementById('app-screen').style.display = user ? 'flex' : 'none';
-            if(user) loadData();
+            if(user) {
+                const myID = btoa(user.email).replace(/[/=]/g, "");
+                // Online Status Management
+                const statusRef = db.ref(`status/${myID}`);
+                statusRef.set("online");
+                statusRef.onDisconnect().set("offline");
+                loadData();
+            }
         });
+
+        function updateBio() {
+            const bio = document.getElementById('my-bio').value;
+            const myID = btoa(auth.currentUser.email).replace(/[/=]/g, "");
+            db.ref(`users/${myID}/bio`).set(bio);
+            alert("Bio updated!");
+        }
 
         function sendRequest() {
             const email = prompt("Dost ki Email ID:");
@@ -114,20 +137,41 @@
 
         function loadData() {
             const myID = btoa(auth.currentUser.email).replace(/[/=]/g, "");
+            
+            // Pending Requests
             db.ref(`requests/${myID}`).on('value', snap => {
                 const area = document.getElementById('requests-area'); area.innerHTML = "";
                 snap.forEach(child => {
                     const req = child.val();
                     if(req.status === 'pending') {
-                        area.innerHTML += `<div class="request-box">New Request: ${req.from}<br><button class="btn" style="padding:5px; margin-top:5px;" onclick="accept('${child.key}', '${req.from}')">Accept</button></div>`;
+                        area.innerHTML += `<div class="request-box" style="margin:10px; padding:10px; background:#1c2a33; border-radius:8px;">New Friend: ${req.from}<br><button class="btn" style="padding:5px; margin-top:5px;" onclick="accept('${child.key}', '${req.from}')">Accept</button></div>`;
                     }
                 });
             });
 
+            // Friend List with Live Status
             db.ref(`friends/${myID}`).on('value', snap => {
                 const list = document.getElementById('contacts'); list.innerHTML = "";
                 snap.forEach(child => {
-                    list.innerHTML += `<div class="chat-item" onclick="openChat('${child.val().email}')"><div class="avatar">👤</div><div><b>${child.val().email}</b><br><small style="color:var(--wa-dim)">Tap to chat</small></div></div>`;
+                    const friendEmail = child.val().email;
+                    const friendID = btoa(friendEmail).replace(/[/=]/g, "");
+                    
+                    const div = document.createElement('div');
+                    div.className = "chat-item";
+                    div.id = `contact-${friendID}`;
+                    div.innerHTML = `<div class="avatar">👤</div><div><b id="name-${friendID}">${friendEmail}</b><br><small id="status-${friendID}" class="offline">offline</small></div>`;
+                    div.onclick = () => openChat(friendEmail);
+                    list.appendChild(div);
+
+                    // Listen for Online Status & Bio
+                    db.ref(`status/${friendID}`).on('value', s => {
+                        const statusEl = document.getElementById(`status-${friendID}`);
+                        if(statusEl) {
+                            const isOnline = s.val() === "online";
+                            statusEl.innerText = isOnline ? "● online" : "offline";
+                            statusEl.className = isOnline ? "online" : "offline";
+                        }
+                    });
                 });
             });
         }
@@ -141,30 +185,26 @@
 
         function openChat(email) {
             activeChat = email;
+            const friendID = btoa(email).replace(/[/=]/g, "");
             document.getElementById('chat-window').style.display = 'flex';
             document.getElementById('chat-with-name').innerText = email;
-            const chatID = [auth.currentUser.email, email].sort().join("").replace(/[@.]/g, "");
             
+            db.ref(`status/${friendID}`).on('value', s => {
+                document.getElementById('chat-status').innerText = s.val() || "offline";
+                document.getElementById('chat-status').className = s.val() === "online" ? "online" : "offline";
+            });
+
+            const chatID = [auth.currentUser.email, email].sort().join("").replace(/[@.]/g, "");
             db.ref(`chats/${chatID}`).on('value', snap => {
-                const box = document.getElementById('msg-box');
-                box.innerHTML = "";
+                const box = document.getElementById('msg-box'); box.innerHTML = "";
                 snap.forEach(m => {
                     const data = m.val();
                     const isMe = data.sender === auth.currentUser.email;
-                    const time = data.time ? new Date(data.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                    
-                    const div = document.createElement('div');
-                    div.className = `msg ${isMe ? 'sent' : 'recv'}`;
-                    div.innerHTML = `${data.text} <div class="m-info">${time} ${isMe ? '<span class="tick">✔✔</span>' : ''}</div>`;
-                    
-                    // DELETE LOGIC: Click karne par option
-                    div.onclick = () => {
-                        if(isMe && confirm("Delete this message?")) {
-                            db.ref(`chats/${chatID}/${m.key}`).remove();
-                        }
-                    };
-                    
-                    box.appendChild(div);
+                    const d = document.createElement('div');
+                    d.className = `msg ${isMe ? 'sent' : 'recv'}`;
+                    d.innerHTML = `${data.text}<div class="m-info">${new Date(data.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ${isMe ? '<span class="tick">✔✔</span>' : ''}</div>`;
+                    d.onclick = () => { if(isMe && confirm("Delete?")) db.ref(`chats/${chatID}/${m.key}`).remove(); };
+                    box.appendChild(d);
                 });
                 box.scrollTop = box.scrollHeight;
             });
@@ -174,13 +214,7 @@
             const i = document.getElementById('m-input');
             if(!i.value.trim()) return;
             const chatID = [auth.currentUser.email, activeChat].sort().join("").replace(/[@.]/g, "");
-            
-            // Database mein naya message push karna WITH TIME
-            db.ref(`chats/${chatID}`).push({
-                sender: auth.currentUser.email,
-                text: i.value,
-                time: Date.now() // Ye line time save karegi
-            });
+            db.ref(`chats/${chatID}`).push({sender: auth.currentUser.email, text: i.value, time: Date.now()});
             i.value = "";
         }
 
