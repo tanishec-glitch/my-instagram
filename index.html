@@ -3,162 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Midnight Bites | Premium Food</title>
+    <title>WhatsApp Web Clone</title>
     <style>
-        /* 1. THE DARK THEME COLORS */
         :root {
-            --bg: #060c21;
-            --card: #111827;
-            --accent: #e23744; /* Zomato Red */
-            --text-main: #ffffff;
-            --text-dim: #9ca3af;
+            --wa-bg: #0b141a;
+            --wa-header: #202c33;
+            --wa-msg-in: #202c33;
+            --wa-msg-out: #005c4b;
+            --wa-text: #e9edef;
+            --wa-dim: #8696a0;
+            --wa-accent: #00a884;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--wa-bg);
+            color: var(--wa-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* 2. GLASSMORPHISM HEADER */
+        /* Top Header */
         .header {
-            padding: 20px;
-            background: rgba(17, 24, 39, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .location {
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: bold;
+            background-color: var(--wa-header);
+            padding: 10px 16px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
         }
 
-        /* 3. PREMIUM SEARCH BAR */
-        .search-container {
-            padding: 15px;
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; background: #666; border-radius: 50%; }
+        .status-dot { width: 10px; height: 10px; background: var(--wa-accent); border-radius: 50%; }
+
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* WA Pattern */
+            background-blend-mode: overlay;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .search-bar {
-            width: 100%;
-            padding: 14px;
-            background: var(--card);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
+        .msg {
+            max-width: 70%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14.5px;
+            position: relative;
+            line-height: 1.4;
         }
 
-        /* 4. FOOD CARDS */
-        .food-card {
-            background: var(--card);
-            margin: 15px;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        .received { background-color: var(--wa-msg-in); align-self: flex-start; border-top-left-radius: 0; }
+        .sent { background-color: var(--wa-msg-out); align-self: flex-end; border-top-right-radius: 0; }
+
+        .time {
+            font-size: 10px;
+            color: var(--wa-dim);
+            display: block;
+            text-align: right;
+            margin-top: 4px;
         }
 
-        .food-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
+        /* Input Area */
+        .input-area {
+            background-color: var(--wa-header);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .details {
-            padding: 15px;
-        }
-
-        .res-name {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .rating {
-            background: #24963f;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            float: right;
-        }
-
-        .meta {
-            color: var(--text-dim);
-            font-size: 14px;
-        }
-
-        /* 5. THE "ORDER" BUTTON */
-        .order-btn {
-            width: 100%;
-            background: var(--accent);
-            color: white;
+        .text-input {
+            flex: 1;
+            background-color: #2a3942;
             border: none;
             padding: 12px;
-            border-radius: 10px;
-            margin-top: 15px;
-            font-weight: bold;
-            cursor: pointer;
+            border-radius: 8px;
+            color: white;
+            outline: none;
         }
 
-        /* BOTTOM NAV */
-        .nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: var(--card);
-            display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
+        .send-btn {
+            background: none;
+            border: none;
+            color: var(--wa-accent);
+            font-weight: bold;
+            font-size: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="location">📍 Bhopal, MP ▼</div>
+        <div class="user-info">
+            <div class="avatar"></div>
+            <div>
+                <div style="font-weight: bold;">Gemini AI</div>
+                <div style="font-size: 12px; color: var(--wa-accent);">online</div>
+            </div>
+        </div>
+        <div style="font-size: 20px; opacity: 0.7;">⋮</div>
     </div>
 
-    <div class="search-container">
-        <input type="text" class="search-bar" placeholder="Search Midnight Biryani...">
-    </div>
-
-    <div class="food-card">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600" class="food-img">
-        <div class="details">
-            <span class="rating">4.5 ★</span>
-            <div class="res-name">Neon Pizza Hub</div>
-            <div class="meta">Italian • Cheese Burst • ₹299</div>
-            <button class="order-btn">ADD TO CART</button>
+    <div class="chat-container" id="chat">
+        <div class="msg received">
+            Hey! This is your new WhatsApp Clone. 🚀
+            <span class="time">12:45 PM</span>
+        </div>
+        <div class="msg sent">
+            Finally! Let's hope the GitHub cache works this time.
+            <span class="time">12:46 PM</span>
+        </div>
+        <div class="msg received">
+            Try adding this to your Home Screen for the full experience.
+            <span class="time">12:46 PM</span>
         </div>
     </div>
 
-    <div class="food-card">
-        <img src="https://images.unsplash.com/photo-1589187151003-0dd47b29869b?w=600" class="food-img">
-        <div class="details">
-            <span class="rating">4.8 ★</span>
-            <div class="res-name">Midnight Biryani</div>
-            <div class="meta">Mughlai • Dum Biryani • ₹350</div>
-            <button class="order-btn">ADD TO CART</button>
-        </div>
+    <div class="input-area">
+        <span style="font-size: 20px; opacity: 0.6;">😊</span>
+        <input type="text" class="text-input" placeholder="Type a message" id="msgInput">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
-    <div style="height: 80px;"></div> <div class="nav">
-        <div style="color: var(--accent)">🏠<br>Home</div>
-        <div>🔍<br>Search</div>
-        <div>🛒<br>Cart</div>
-        <div>👤<br>User</div>
-    </div>
-
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const chat = document.getElementById('chat');
+            
+            if (input.value.trim() !== "") {
+                const newMsg = document.createElement('div');
+                newMsg.className = 'msg sent';
+                newMsg.innerHTML = `${input.value}<span class="time">Just now</span>`;
+                chat.appendChild(newMsg);
+                input.value = "";
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+    </script>
 </body>
 </html>
-        
