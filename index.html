@@ -1,152 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Web Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat</title>
     <style>
-        :root {
-            --wa-bg: #0b141a;
-            --wa-header: #202c33;
-            --wa-msg-in: #202c33;
-            --wa-msg-out: #005c4b;
-            --wa-text: #e9edef;
-            --wa-dim: #8696a0;
-            --wa-accent: #00a884;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--wa-bg);
-            color: var(--wa-text);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Top Header */
-        .header {
-            background-color: var(--wa-header);
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-        }
-
-        .user-info { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 40px; height: 40px; background: #666; border-radius: 50%; }
-        .status-dot { width: 10px; height: 10px; background: var(--wa-accent); border-radius: 50%; }
-
-        /* Chat Area */
-        .chat-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* WA Pattern */
-            background-blend-mode: overlay;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .msg {
-            max-width: 70%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 14.5px;
-            position: relative;
-            line-height: 1.4;
-        }
-
-        .received { background-color: var(--wa-msg-in); align-self: flex-start; border-top-left-radius: 0; }
-        .sent { background-color: var(--wa-msg-out); align-self: flex-end; border-top-right-radius: 0; }
-
-        .time {
-            font-size: 10px;
-            color: var(--wa-dim);
-            display: block;
-            text-align: right;
-            margin-top: 4px;
-        }
-
-        /* Input Area */
-        .input-area {
-            background-color: var(--wa-header);
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .text-input {
-            flex: 1;
-            background-color: #2a3942;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-        }
-
-        .send-btn {
-            background: none;
-            border: none;
-            color: var(--wa-accent);
-            font-weight: bold;
-            font-size: 20px;
-            cursor: pointer;
-        }
+        body { background: #0b141a; color: white; font-family: sans-serif; margin: 0; }
+        .header { background: #202c33; padding: 20px; font-weight: bold; border-bottom: 1px solid #333; }
+        .chat-box { padding: 20px; height: 70vh; overflow-y: auto; }
+        .bubble { background: #005c4b; padding: 10px; border-radius: 10px; margin-bottom: 10px; width: fit-content; max-width: 80%; }
+        .input-area { position: fixed; bottom: 0; width: 100%; background: #202c33; padding: 15px; display: flex; box-sizing: border-box; }
+        input { flex: 1; padding: 10px; border-radius: 5px; border: none; outline: none; }
+        button { background: #00a884; color: white; border: none; padding: 10px 20px; margin-left: 10px; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-info">
-            <div class="avatar"></div>
-            <div>
-                <div style="font-weight: bold;">Gemini AI</div>
-                <div style="font-size: 12px; color: var(--wa-accent);">online</div>
-            </div>
-        </div>
-        <div style="font-size: 20px; opacity: 0.7;">⋮</div>
-    </div>
+    <div class="header">🟢 Gemini Chat</div>
 
-    <div class="chat-container" id="chat">
-        <div class="msg received">
-            Hey! This is your new WhatsApp Clone. 🚀
-            <span class="time">12:45 PM</span>
-        </div>
-        <div class="msg sent">
-            Finally! Let's hope the GitHub cache works this time.
-            <span class="time">12:46 PM</span>
-        </div>
-        <div class="msg received">
-            Try adding this to your Home Screen for the full experience.
-            <span class="time">12:46 PM</span>
-        </div>
+    <div class="chat-box">
+        <div class="bubble">Hello! If you see this, the website is working. 🚀</div>
+        <div class="bubble">Try typing a message below.</div>
     </div>
 
     <div class="input-area">
-        <span style="font-size: 20px; opacity: 0.6;">😊</span>
-        <input type="text" class="text-input" placeholder="Type a message" id="msgInput">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <input type="text" id="m" placeholder="Type here...">
+        <button onclick="s()">SEND</button>
     </div>
 
     <script>
-        function sendMessage() {
-            const input = document.getElementById('msgInput');
-            const chat = document.getElementById('chat');
-            
-            if (input.value.trim() !== "") {
-                const newMsg = document.createElement('div');
-                newMsg.className = 'msg sent';
-                newMsg.innerHTML = `${input.value}<span class="time">Just now</span>`;
-                chat.appendChild(newMsg);
-                input.value = "";
-                chat.scrollTop = chat.scrollHeight;
+        function s() {
+            let i = document.getElementById('m');
+            if(i.value) {
+                let d = document.createElement('div');
+                d.className = 'bubble';
+                d.style.alignSelf = 'flex-end';
+                d.style.background = '#343f46';
+                d.innerText = i.value;
+                document.querySelector('.chat-box').appendChild(d);
+                i.value = '';
             }
         }
     </script>
