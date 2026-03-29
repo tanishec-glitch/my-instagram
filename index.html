@@ -2,51 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Lite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My High Level App</title>
     <style>
-        body { margin: 0; font-family: sans-serif; background: #0b141a; color: white; display: flex; flex-direction: column; height: 100vh; }
-        .header { background: #202c33; padding: 15px; font-weight: bold; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 35px; height: 35px; background: #666; border-radius: 50%; }
-        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; }
-        .msg { padding: 10px; border-radius: 10px; max-width: 75%; font-size: 14px; }
-        .received { background: #202c33; align-self: flex-start; }
-        .sent { background: #005c4b; align-self: flex-end; }
+        body { margin: 0; background: #0b141a; color: white; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #202c33; padding: 20px; font-weight: bold; border-bottom: 1px solid #333; }
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; }
+        .msg { background: #005c4b; padding: 10px; border-radius: 10px; margin-bottom: 10px; max-width: 80%; align-self: flex-end; }
         .input-bar { background: #202c33; padding: 15px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 8px; border: none; outline: none; background: #2a3942; color: white; }
-        button { background: #00a884; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #2a3942; color: white; outline: none; }
+        button { background: #00a884; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="avatar"></div>
-        <span>My High-Level App</span>
-    </div>
+    <div class="header">My High-Level Web App</div>
 
-    <div class="chat-area" id="box">
-        <div class="msg received">The old code was for Mobile Apps. This code is for Websites! 🚀</div>
-        <div class="msg sent">Now it should work on GitHub!</div>
+    <div class="chat-area">
+        <div class="msg">Bhai, agar ye screen Dark Blue dikh rahi hai, toh matlab website chal gayi! 🚀</div>
     </div>
 
     <div class="input-bar">
-        <input type="text" id="m" placeholder="Type a message">
-        <button onclick="send()">SEND</button>
+        <input type="text" placeholder="Type a message...">
+        <button>SEND</button>
     </div>
 
-    <script>
-        function send() {
-            let i = document.getElementById('m');
-            let b = document.getElementById('box');
-            if(i.value) {
-                let d = document.createElement('div');
-                d.className = 'msg sent';
-                d.innerText = i.value;
-                b.appendChild(d);
-                i.value = '';
-                b.scrollTop = b.scrollHeight;
-            }
-        }
-    </script>
 </body>
 </html>
