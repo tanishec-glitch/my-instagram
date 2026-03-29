@@ -1,134 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ludo Master Pro</title>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore-compat.js"></script>
-    
-    <style>
-        :root { --red: #ff4d4d; --blue: #2e86de; --green: #2ecc71; --yellow: #f1c40f; --gold: #ffd700; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #091e42; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+<div id="cricket-app">
+    <div class="score-card">
+        <div class="teams">IND vs AUS</div>
+        <div class="live-score"><span id="runs">145</span> / <span id="wickets">3</span></div>
+        <div class="overs">Overs: <span id="overs">18.2</span></div>
+    </div>
 
-        /* --- TOP UI BAR --- */
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(0,0,0,0.4); border-bottom: 2px solid var(--gold); }
-        .currency-box { display: flex; gap: 10px; }
-        .stat { background: #000; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--gold); font-weight: bold; font-size: 0.9rem; }
-
-        /* --- LUDO BOARD --- */
-        #game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
-        #ludo-board { 
-            display: grid; 
-            grid-template-columns: repeat(15, 1fr); 
-            grid-template-rows: repeat(15, 1fr); 
-            width: 95vw; height: 95vw; max-width: 400px; max-height: 400px;
-            background: #fff; border: 4px solid var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .cell { border: 0.1px solid #ddd; box-sizing: border-box; }
-        
-        /* Base Colors */
-        .r-bg { background-color: var(--red); }
-        .b-bg { background-color: var(--blue); }
-        .g-bg { background-color: var(--green); }
-        .y-bg { background-color: var(--yellow); }
-        .safe { background-color: #bdc3c7; position: relative; }
-        .safe::after { content: '⭐'; font-size: 0.6rem; position: absolute; top: 2px; left: 2px; }
-
-        /* --- CONTROLS --- */
-        .controls { padding: 20px; display: flex; gap: 10px; justify-content: center; }
-        #dice-btn { background: var(--green); color: white; border: none; padding: 15px 40px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 0 #1b8a4d; }
-        #dice-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* --- BOTTOM NAV --- */
-        .bottom-nav { display: flex; justify-content: space-around; background: #051937; padding: 10px 0; border-top: 1px solid #334155; }
-        .nav-item { font-size: 0.7rem; text-align: center; opacity: 0.7; }
-    </style>
-</head>
-<body>
-
-    <div class="top-nav">
-        <div style="display:flex; align-items:center; gap:8px">
-            <div style="width:35px; height:35px; background:#fff; border-radius:50%"></div>
-            <span>GUEST_77</span>
-        </div>
-        <div class="currency-box">
-            <div class="stat">💎 <span id="gems">66</span></div>
-            <div class="stat">🪙 <span id="coins">4,950</span></div>
+    <div class="prediction-zone">
+        <h3>Predict Next Over</h3>
+        <div class="market-box">
+            <button onclick="placeBet(10, 'high')">Over 8.5 Runs (2x)</button>
+            <button onclick="placeBet(10, 'low')">Under 8.5 Runs (1.5x)</button>
         </div>
     </div>
+</div>
 
-    <div id="game-area">
-        <div id="ludo-board"></div>
-        <div id="dice-display" style="margin-top:15px; font-size:1.5rem">Dice: <span id="dice-val">?</span></div>
-    </div>
-
-    <div class="controls">
-        <button id="dice-btn" onclick="rollDice()">ROLL DICE</button>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item">🏠<br>HOME</div>
-        <div class="nav-item">🎲<br>INVENTORY</div>
-        <div class="nav-item">👥<br>SOCIAL</div>
-    </div>
-
-    <script>
-        // --- 1. FIREBASE CONFIG ---
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // --- 2. GENERATE BOARD ---
-        const board = document.getElementById('ludo-board');
-        for (let i = 0; i < 225; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            
-            // Logic to color bases (simplistic version)
-            const row = Math.floor(i / 15);
-            const col = i % 15;
-
-            if (row < 6 && col < 6) cell.classList.add('r-bg');
-            if (row < 6 && col > 8) cell.classList.add('g-bg');
-            if (row > 8 && col < 6) cell.classList.add('b-bg');
-            if (row > 8 && col > 8) cell.classList.add('y-bg');
-            
-            board.appendChild(cell);
-        }
-
-        // --- 3. DICE & FIREBASE SYNC ---
-        async function rollDice() {
-            const val = Math.floor(Math.random() * 6) + 1;
-            document.getElementById('dice-val').innerText = val;
-            
-            // Update Firebase (Assuming you have a 'games/test' doc)
-            try {
-                await db.collection("games").doc("current_game").set({
-                    lastRoll: val,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            } catch(e) { console.log("Firebase not connected yet: ", e); }
-        }
-
-        // --- 4. REAL-TIME CURRENCY SYNC ---
-        function listenToUser(userId) {
-            db.collection("users").doc(userId).onSnapshot((doc) => {
-                if (doc.exists) {
-                    document.getElementById('coins').innerText = doc.data().coins;
-                    document.getElementById('gems').innerText = doc.data().gems;
-                }
-            });
-        }
-        // listenToUser('user_test'); // Uncomment when user exists in DB
-    </script>
-</body>
-</html>
+<style>
+    .score-card { background: linear-gradient(#004e92, #000428); padding: 20px; border-radius: 15px; text-align: center; border: 2px solid #ffd700; }
+    .live-score { font-size: 2.5rem; font-weight: bold; color: #fff; }
+    .prediction-zone { margin-top: 20px; }
+    .market-box button { width: 100%; padding: 15px; margin: 5px 0; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+</style>
