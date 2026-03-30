@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Message Culture v19 - Premium Font</title>
+    <title>Message Culture v19 - Official</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
@@ -11,51 +11,176 @@
 
     <style>
         :root { 
-            --bg: #0b141a; 
-            --header: #111b21; 
-            --accent: #00a884; 
-            --text: #ffffff; 
-            --font-main: 'Poppins', sans-serif; /* Modern & Clean */
-            --font-msg: 'Roboto', sans-serif;  /* Best for Reading */
+            --bg: #0b141a; --header: #111b21; --accent: #00a884; --text: #ffffff; 
+            --dim: #8696a0; --sent: #005c4b; --recv: #202c33; --blue: #34b7f1;
+            --font-main: 'Poppins', sans-serif;
         }
+        .light-mode { --bg: #f0f2f5; --header: #ffffff; --text: #111b21; --sent: #dcf8c6; --recv: #ffffff; --dim: #667781; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: var(--font-main); /* Pura app ab Poppins mein dikhega */
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: 0.2s; font-family: var(--font-main); }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        .top-nav b { font-weight: 700; font-size: 18px; letter-spacing: 0.5px; }
-        
-        .chat-list b { font-family: var(--font-main); font-weight: 500; font-size: 16px; }
-        .chat-list p { font-family: var(--font-msg); font-size: 13px; color: #8696a0; }
+        /* UI COMPONENTS */
+        .top-nav { height: 60px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; background: var(--header); z-index: 1000; border-bottom: 1px solid rgba(0,168,132,0.2); }
+        .chat-list { flex: 1; overflow-y: auto; padding-bottom: 110px; } 
+        .chat-item { display: flex; padding: 15px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
+        .avatar { width: 48px; height: 48px; background: #2a3942; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid var(--accent); color: var(--accent); font-weight: bold; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        .msg { 
-            font-family: var(--font-msg); /* Messages ke liye Roboto best hai */
-            padding: 10px 15px; 
-            border-radius: 14px; 
-            max-width: 78%; 
-            font-size: 14.5px; 
-            line-height: 1.5;
-        }
+        /* AD PROTECTION LAYER (For Website 2 APK) */
+        .ad-container { position: fixed; bottom: 0; width: 100%; height: 90px; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; z-index: 9999; border-top: 1.5px solid var(--accent); padding-top: 5px; }
+        .ad-label { font-size: 10px; color: var(--accent); font-weight: bold; letter-spacing: 1px; margin-bottom: 3px; }
 
-        /* Rest of the layout same as v18... */
-        .ad-outer-box { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; border-top: 1.5px solid var(--accent); }
+        /* CHAT WINDOW */
+        #chat-window { position: fixed; inset: 0; z-index: 2000; background: var(--bg); display: none; flex-direction: column; padding-bottom: 90px; }
+        #msg-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: 400px; }
+        .msg { padding: 10px 14px; border-radius: 14px; max-width: 75%; font-size: 14px; position: relative; font-family: 'Roboto', sans-serif; }
+        .sent { background: var(--sent); align-self: flex-end; border-top-right-radius: 2px; }
+        .recv { background: var(--recv); align-self: flex-start; border-top-left-radius: 2px; }
+
+        .type-area { height: 65px; background: var(--header); display: flex; gap: 10px; align-items: center; padding: 0 12px; }
+        .msg-input { flex: 1; padding: 12px 18px; border-radius: 25px; border: none; background: rgba(255,255,255,0.1); color: var(--text); outline: none; }
+        .fab { position: fixed; bottom: 105px; right: 20px; width: 55px; height: 55px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 99; }
+
+        /* AUTH & PROFILE */
+        #auth-screen, #profile-modal { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-card { background: var(--header); padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
-    <div class="ad-outer-box">
+
+    <audio id="notif-sound" src="https://www.myinstants.com/media/sounds/whatsapp-notification.mp3" preload="auto"></audio>
+
+    <div class="ad-container">
+        <span class="ad-label">ADVERTISEMENT</span>
         <ins class="adsbygoogle"
              style="display:inline-block;width:320px;height:50px"
              data-ad-client="ca-app-pub-9973041311891827"
              data-ad-slot="5969803746"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-    </body>
+
+    <div id="app-screen" style="display:flex; flex-direction:column; height:calc(100% - 90px);">
+        <div class="top-nav">
+            <div onclick="openProfile()" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                <div class="avatar" id="my-avatar">T</div>
+                <b id="my-display-name">Message Culture</b>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span onclick="toggleTheme()" style="cursor:pointer; font-size:20px;">🌓</span>
+                <span onclick="auth.signOut()" style="color:var(--accent); font-weight:bold; font-size:12px; cursor:pointer;">LOGOUT</span>
+            </div>
+        </div>
+        <div class="chat-list" id="contacts"></div>
+        <div class="fab" onclick="addFriend()">+</div>
+    </div>
+
+    <div id="chat-window">
+        <div class="top-nav">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span onclick="backHome()" style="font-size:24px; cursor:pointer;">←</span>
+                <b id="chat-title">Chat</b>
+            </div>
+        </div>
+        <div id="msg-box"></div>
+        <div class="type-area">
+            <input type="text" id="m-input" class="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+            <button onclick="sendMsg()" style="background:var(--accent); border:none; width:45px; height:45px; border-radius:50%; color:#000;">➤</button>
+        </div>
+    </div>
+
+    <div id="auth-screen">
+        <div class="modal-card">
+            <h2 style="color:var(--accent); margin-bottom:10px;">NEON CHAT</h2>
+            <p style="color:var(--dim); font-size:12px; margin-bottom:25px;">Official Message Culture Login</p>
+            <input type="email" id="email" class="msg-input" style="width:100%; margin-bottom:10px;" placeholder="Email">
+            <input type="password" id="pass" class="msg-input" style="width:100%; margin-bottom:20px;" placeholder="Password">
+            <button onclick="handleAuth()" style="width:100%; padding:14px; background:var(--accent); border:none; border-radius:10px; font-weight:bold;">START CHATTING</button>
+        </div>
+    </div>
+
+    <div id="profile-modal">
+        <div class="modal-card">
+            <h3 style="color:var(--accent)">Profile Settings</h3><br>
+            <input type="text" id="p-name" class="msg-input" style="width:100%; margin-bottom:10px;" placeholder="Display Name">
+            <input type="text" id="p-img" class="msg-input" style="width:100%; margin-bottom:20px;" placeholder="Photo URL">
+            <button onclick="saveProfile()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:10px; font-weight:bold;">SAVE</button>
+            <p onclick="closeProfile()" style="margin-top:15px; cursor:pointer; color:var(--dim);">Cancel</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04", authDomain: "my-insta-backend.firebaseapp.com", databaseURL: "https://my-insta-backend-default-rtdb.firebaseio.com", projectId: "my-insta-backend", storageBucket: "my-insta-backend.firebasestorage.app", messagingSenderId: "955106968523", appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e" };
+        firebase.initializeApp(firebaseConfig); const auth = firebase.auth(); const db = firebase.database();
+        let activeChat = "", myID = "", lastMsgCount = 0;
+
+        function handleAuth() {
+            const e = document.getElementById('email').value, p = document.getElementById('pass').value;
+            if(!e || !p) return alert("Email/Pass dalo bhai!");
+            auth.signInWithEmailAndPassword(e, p).catch(() => auth.createUserWithEmailAndPassword(e, p));
+        }
+
+        auth.onAuthStateChanged(user => {
+            document.getElementById('auth-screen').style.display = user ? 'none' : 'flex';
+            if(user) {
+                myID = btoa(user.email).replace(/[/=]/g, "");
+                db.ref(`profiles/${myID}`).on('value', s => {
+                    if(s.val()) {
+                        document.getElementById('my-display-name').innerText = s.val().name || user.email;
+                        if(s.val().img) document.getElementById('my-avatar').innerHTML = `<img src="${s.val().img}">`;
+                    }
+                });
+                loadFriends();
+            }
+        });
+
+        function loadFriends() {
+            db.ref(`friends/${myID}`).on('value', snap => {
+                const list = document.getElementById('contacts'); list.innerHTML = "";
+                snap.forEach(child => {
+                    const email = child.val().email; const fID = btoa(email).replace(/[/=]/g, "");
+                    const div = document.createElement('div'); div.className = "chat-item";
+                    div.innerHTML = `<div class="avatar">${email[0].toUpperCase()}</div><div style="margin-left:15px;flex:1" onclick="openChat('${email}')"><b>${email}</b><p>Click to chat</p></div>`;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function openChat(email) {
+            activeChat = email; document.getElementById('chat-window').style.display = 'flex';
+            document.getElementById('chat-title').innerText = email;
+            const chatID = [auth.currentUser.email, email].sort().join("").replace(/[@.]/g, "");
+            db.ref(`chats/${chatID}`).on('value', snap => {
+                const box = document.getElementById('msg-box'); box.innerHTML = "";
+                if(snap.numChildren() > lastMsgCount && lastMsgCount !== 0) document.getElementById('notif-sound').play().catch(()=>{});
+                lastMsgCount = snap.numChildren();
+                snap.forEach(m => {
+                    const isMe = m.val().sender === auth.currentUser.email;
+                    const d = document.createElement('div'); d.className = `msg ${isMe ? 'sent' : 'recv'}`;
+                    d.innerHTML = m.val().text + (isMe ? ` <span style="font-size:10px; color:#34b7f1">✔✔</span>` : "");
+                    box.appendChild(d);
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        function sendMsg() {
+            const i = document.getElementById('m-input'); if(!i.value.trim()) return;
+            const chatID = [auth.currentUser.email, activeChat].sort().join("").replace(/[@.]/g, "");
+            db.ref(`chats/${chatID}`).push({ sender: auth.currentUser.email, text: i.value, time: Date.now() });
+            i.value = "";
+        }
+
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function openProfile() { document.getElementById('profile-modal').style.display = 'flex'; }
+        function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+        function saveProfile() { db.ref(`profiles/${myID}`).set({ name: document.getElementById('p-name').value, img: document.getElementById('p-img').value }); closeProfile(); }
+        function addFriend() { const e = prompt("Friend's Email:"); if(e) { const tID = btoa(e).replace(/[/=]/g, ""); db.ref(`friends/${myID}/${tID}`).set({email:e}); db.ref(`friends/${tID}/${myID}`).set({email:auth.currentUser.email}); }}
+        function backHome() { document.getElementById('chat-window').style.display = 'none'; lastMsgCount = 0; }
+    </script>
+</body>
 </html>
