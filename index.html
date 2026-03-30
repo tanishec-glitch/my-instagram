@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Chat v16 - Message Culture</title>
+    <title>Neon Chat v17 - Message Culture (Launch Mode)</title>
+    
+    <link rel="icon" type="image/png" href="https://via.placeholder.com/192x192/0b141a/00a884?text=MC" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/0b141a/00a884?text=MC">
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-9973041311891827" crossorigin="anonymous"></script>
 
@@ -13,16 +16,13 @@
         * { box-sizing: border-box; margin: 0; padding: 0; transition: 0.3s; }
         body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER & NAVIGATION */
+        /* NAVIGATION & HEADER */
         .top-nav { height: 60px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; background: var(--header); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .status-bar { display: flex; gap: 12px; padding: 10px; overflow-x: auto; background: var(--header); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .status-item { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent); padding: 2px; flex-shrink: 0; }
-        .status-item img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-
-        /* CHAT LIST AREA */
+        
+        /* CHAT LIST */
         .chat-list { flex: 1; overflow-y: auto; padding-bottom: 70px; } 
         .chat-item { display: flex; padding: 15px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
-        .avatar { width: 48px; height: 48px; background: #2a3942; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; font-weight: bold; }
+        .avatar { width: 48px; height: 48px; background: #2a3942; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; font-weight: bold; border: 2px solid rgba(255,255,255,0.05); }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         /* 🔥 AD BANNER STYLING 🔥 */
@@ -45,7 +45,7 @@
         
         /* MODALS */
         #profile-modal, #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 4000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--header); padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; }
+        .modal-content { background: var(--header); padding: 30px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -78,7 +78,7 @@
         </div>
 
         <div class="chat-list" id="contacts">
-            <div style="padding:40px; text-align:center; color:var(--dim);">Add friends to start earning!</div>
+            <div style="padding:40px; text-align:center; color:var(--dim);">Loading friends...</div>
         </div>
         
         <div class="fab" onclick="addFriend()">+</div>
@@ -104,7 +104,7 @@
             <input type="text" id="p-name" class="msg-input" style="width:100%; margin-bottom:12px;" placeholder="Your Name">
             <input type="text" id="p-img" class="msg-input" style="width:100%; margin-bottom:20px;" placeholder="Photo URL">
             <button onclick="saveProfile()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:12px; font-weight:bold; color:#000;">SAVE PROFILE</button>
-            <p onclick="closeProfile()" style="margin-top:18px; cursor:pointer; color:var(--dim); font-size:14px;">Go Back</p>
+            <p onclick="closeProfile()" style="margin-top:18px; cursor:pointer; color:var(--dim); font-size:14px;">Cancel</p>
         </div>
     </div>
 
@@ -123,7 +123,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
 
     <script>
-        // FIREBASE CONFIG (Wahi jo pehle tha)
+        // FIREBASE CONFIG (No changes needed)
         const firebaseConfig = { apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04", authDomain: "my-insta-backend.firebaseapp.com", databaseURL: "https://my-insta-backend-default-rtdb.firebaseio.com", projectId: "my-insta-backend", storageBucket: "my-insta-backend.firebasestorage.app", messagingSenderId: "955106968523", appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e" };
         firebase.initializeApp(firebaseConfig); 
         const auth = firebase.auth(); 
@@ -156,7 +156,7 @@
         function loadFriends() {
             db.ref(`friends/${myID}`).on('value', snap => {
                 const list = document.getElementById('contacts'); list.innerHTML = "";
-                if(!snap.exists()) list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--dim);">No friends yet. Click '+' to add.</div>`;
+                if(!snap.exists()) list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--dim);">No friends added.</div>`;
                 snap.forEach(child => {
                     const email = child.val().email; const fID = btoa(email).replace(/[/=]/g, "");
                     const div = document.createElement('div'); div.className = "chat-item";
@@ -196,9 +196,8 @@
         function openProfile() { document.getElementById('profile-modal').style.display = 'flex'; }
         function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
         function saveProfile() { db.ref(`profiles/${myID}`).set({ name: document.getElementById('p-name').value, img: document.getElementById('p-img').value }); closeProfile(); }
-        function addFriend() { const e = prompt("Enter Friend's Email:"); if(e) { const tID = btoa(e).replace(/[/=]/g, ""); db.ref(`friends/${myID}/${tID}`).set({email:e}); db.ref(`friends/${tID}/${myID}`).set({email:auth.currentUser.email}); }}
+        function addFriend() { const e = prompt("Friend's Email:"); if(e) { const tID = btoa(e).replace(/[/=]/g, ""); db.ref(`friends/${myID}/${tID}`).set({email:e}); db.ref(`friends/${tID}/${myID}`).set({email:auth.currentUser.email}); }}
         function backHome() { document.getElementById('chat-window').style.display = 'none'; lastMsgCount = 0; }
     </script>
 </body>
 </html>
-        
