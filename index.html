@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Culture Pro - Tanish Mandloi</title>
+    <title>MC Earning - Testing Phase</title>
     
     <script src="https://cdn.unityads.unity3d.com/sdk/4.0.0/unityads.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -12,82 +13,37 @@
 
     <style>
         body { background: #000; color: #FFD700; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .app-container { background: #111; border: 2px solid #FFD700; border-radius: 20px; width: 360px; height: 620px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 25px #b8860b; }
-        
-        /* Auth Section */
-        #auth-section { padding: 30px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-        input { width: 90%; padding: 12px; margin: 10px auto; border-radius: 10px; border: 1px solid #FFD700; background: #222; color: #fff; display: block; }
-        .btn { background: linear-gradient(45deg, #FFD700, #b8860b); color: #000; border: none; padding: 14px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .btn:active { transform: scale(0.95); }
-
-        /* Main App Section */
-        #main-app { display: none; height: 100%; flex-direction: column; }
-        .tabs { display: flex; background: #222; border-bottom: 1px solid #FFD700; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-size: 13px; font-weight: bold; color: #888; }
-        .tab.active-tab { background: #FFD700; color: #000; }
-        
-        .content { flex: 1; padding: 20px; overflow-y: auto; display: none; text-align: center; }
-        .content.active-content { display: block; }
-
-        /* Chat Styles */
-        #chat-box { height: 300px; background: #000; border: 1px solid #333; border-radius: 12px; margin-bottom: 15px; padding: 10px; overflow-y: auto; text-align: left; }
-        .msg { margin-bottom: 10px; padding: 8px; background: #1a1a1a; border-radius: 8px; font-size: 14px; border-left: 3px solid #FFD700; position: relative; }
-        .msg b { color: #FFD700; display: block; font-size: 12px; margin-bottom: 2px; }
-        .del-btn { color: #ff4444; font-size: 10px; cursor: pointer; position: absolute; right: 10px; top: 8px; }
-
-        .balance-card { background: #222; border-radius: 15px; padding: 25px; border: 1px dashed #FFD700; margin-bottom: 20px; }
-        .f-item { background: #222; padding: 10px; border-radius: 8px; margin-bottom: 5px; text-align: left; border: 1px solid #333; }
+        .container { background: #111; border: 2px solid #FFD700; border-radius: 20px; padding: 30px; width: 320px; box-shadow: 0 0 20px #b8860b; text-align: center; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #FFD700; background: #222; color: #fff; outline: none; }
+        .btn { background: linear-gradient(45deg, #FFD700, #b8860b); color: #000; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        #dashboard { display: none; }
+        .balance { font-size: 50px; margin: 20px 0; font-weight: bold; color: #FFD700; }
+        #status { font-size: 12px; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div id="auth-section">
-            <h2 style="letter-spacing: 2px;">MESSAGE CULTURE</h2>
-            <p style="color: #666; font-size: 12px;">Login to access your Wallet & Chats</p>
-            <input type="email" id="email" placeholder="Email Address">
-            <input type="password" id="password" placeholder="Password">
-            <button class="btn" onclick="login()">LOGIN</button>
-            <button class="btn" style="background:none; color:#FFD700; border:1px solid #FFD700;" onclick="register()">CREATE ACCOUNT</button>
-        </div>
+    <div id="auth" class="container">
+        <h2 style="letter-spacing: 1px;">MC LOGIN</h2>
+        <p style="font-size: 12px; color: #888;">Testing Mode: ON ✅</p>
+        <input type="email" id="email" placeholder="Email Address">
+        <input type="password" id="password" placeholder="Password">
+        <button class="btn" onclick="login()">LOGIN</button>
+        <button class="btn" style="background:none; color:#FFD700; border:1px solid #FFD700;" onclick="register()">REGISTER</button>
+    </div>
 
-        <div id="main-app">
-            <div class="tabs">
-                <div class="tab active-tab" id="tab-wallet" onclick="switchTab('wallet')">WALLET</div>
-                <div class="tab" id="tab-chat" onclick="switchTab('chat')">CHAT</div>
-                <div class="tab" id="tab-friends" onclick="switchTab('friends')">FRIENDS</div>
-            </div>
-
-            <div id="content-wallet" class="content active-content">
-                <div class="balance-card">
-                    <p style="color: #aaa; margin: 0;">Total Earnings</p>
-                    <h1 style="font-size: 50px; margin: 10px 0;">₹ <span id="balance">0</span></h1>
-                </div>
-                <button class="btn" onclick="watchVideo()">WATCH VIDEO & EARN</button>
-                <p style="font-size: 11px; margin-top: 20px; color: #555;">Unity Ads Powered: Earning Active ✅</p>
-            </div>
-
-            <div id="content-chat" class="content">
-                <div id="chat-box"></div>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="chat-input" placeholder="Type..." style="flex: 3; margin: 0;">
-                    <button class="btn" style="flex: 1; margin: 0; padding: 10px;" onclick="sendMsg()">SEND</button>
-                </div>
-            </div>
-
-            <div id="content-friends" class="content">
-                <h3>Add a Friend</h3>
-                <input type="email" id="friend-email" placeholder="Friend's Email">
-                <button class="btn" onclick="addFriend()">ADD FRIEND</button>
-                <hr style="border: 0.5px solid #333; margin: 20px 0;">
-                <div id="friends-list"></div>
-                <button onclick="logout()" style="margin-top: 40px; color: #666; background: none; border: none; cursor: pointer;">LOGOUT</button>
-            </div>
-        </div>
+    <div id="dashboard" class="container">
+        <p style="margin: 0; color: #aaa;">Current Balance</p>
+        <div class="balance">₹ <span id="bal">0</span></div>
+        <button class="btn" onclick="showTestVideo()">WATCH TEST VIDEO</button>
+        <button class="btn" style="background:#222; color:#FFD700; border:1px solid #FFD700;" onclick="showTestInterstitial()">TEST FULL SCREEN</button>
+        <div id="status">Waiting for Ads...</div>
+        <button onclick="logout()" style="margin-top:30px; background:none; border:none; color:gray; cursor:pointer; font-size: 12px;">Logout System</button>
     </div>
 
     <script>
-        // 1. FIREBASE CONFIG (TANISH MANDLOI PROJECT)
+        // --- FIREBASE CONFIG (TANISH MANDLOI) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
             authDomain: "my-insta-backend.firebaseapp.com",
@@ -99,81 +55,67 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // 2. UNITY ADS CONFIG (ID: 6078958 | Earning: false means REAL ADS)
-        unityAds.init('6078958', false); 
+        // --- UNITY CONFIG (TESTING MODE = TRUE) ---
+        const gameId = '6078958';
+        unityAds.init(gameId, true); // True matlab Test Ads dikhengi
 
-        // 3. AUTH FUNCTIONS
+        // AUTH FUNCTIONS
         function login() {
-            auth.signInWithEmailAndPassword(e('email').value, e('password').value)
-                .then(u => setupApp(u.user)).catch(x => alert(x.message));
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p)
+                .then(u => startDashboard(u.user.uid))
+                .catch(err => alert("Login Failed: " + err.message));
         }
+
         function register() {
-            auth.createUserWithEmailAndPassword(e('email').value, e('password').value)
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.createUserWithEmailAndPassword(e, p)
                 .then(u => {
-                    db.ref('users/' + u.user.uid).set({ email: u.user.email, balance: 0 });
-                    setupApp(u.user);
-                }).catch(x => alert(x.message));
+                    db.ref('users/' + u.user.uid).set({ balance: 0 });
+                    startDashboard(u.user.uid);
+                })
+                .catch(err => alert("Registration Error: " + err.message));
         }
 
-        // 4. APP SETUP & SYNC
-        function setupApp(user) {
-            e('auth-section').style.display = 'none';
-            e('main-app').style.display = 'flex';
-            
-            // Sync Balance
-            db.ref('users/' + user.uid + '/balance').on('value', s => e('balance').innerText = s.val() || 0);
-            
-            // Sync Chat
-            db.ref('messages').limitToLast(30).on('value', s => {
-                const box = e('chat-box'); box.innerHTML = "";
-                s.forEach(m => {
-                    const isMe = m.val().uid === auth.currentUser.uid;
-                    const del = isMe ? `<span class="del-btn" onclick="delMsg('${m.key}')">DEL</span>` : "";
-                    box.innerHTML += `<div class="msg"><b>${m.val().name}:</b> ${m.val().text} ${del}</div>`;
-                });
-                box.scrollTop = box.scrollHeight;
-            });
+        function startDashboard(uid) {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            window.userUid = uid;
 
-            // Sync Friends
-            db.ref('users/' + user.uid + '/friends').on('value', s => {
-                e('friends-list').innerHTML = "<h4>Your Friends</h4>";
-                s.forEach(f => e('friends-list').innerHTML += `<div class="f-item">👤 ${f.val()}</div>`);
+            // Sync Realtime Balance
+            db.ref('users/' + uid + '/balance').on('value', s => {
+                document.getElementById('bal').innerText = s.val() || 0;
             });
+            
+            document.getElementById('status').innerText = "System Connected. Wait 10s for Ads.";
         }
 
-        // 5. UNITY ADS FUNCTION (EARNING SYSTEM)
-        function watchVideo() {
-            unityAds.show('Rewarded', { // Unit name 'Rewarded' from your dashboard
+        // --- TEST ADS FUNCTIONS ---
+
+        function showTestVideo() {
+            document.getElementById('status').innerText = "Loading Test Video...";
+            unityAds.show('Rewarded_Android', {
                 onComplete: () => {
-                    db.ref('users/' + auth.currentUser.uid + '/balance').transaction(b => (b || 0) + 1);
-                    alert("Mubarak ho! ₹ 1 aapke wallet mein add ho gaya.");
+                    // Test reward update
+                    db.ref('users/' + window.userUid + '/balance').transaction(b => (b || 0) + 1);
+                    document.getElementById('status').innerText = "Test Reward Added! ✅";
                 },
-                onError: (err) => alert("Ad loading... Refresh or wait 5 seconds!")
+                onError: (e) => {
+                    alert("Ad not ready yet. Please wait a few more seconds.");
+                    document.getElementById('status').innerText = "Ad Load Error.";
+                }
             });
         }
 
-        // 6. CHAT & FRIENDS FUNCTIONS
-        function sendMsg() {
-            const txt = e('chat-input').value; if(!txt) return;
-            db.ref('messages').push({ name: auth.currentUser.email.split('@')[0], text: txt, uid: auth.currentUser.uid });
-            e('chat-input').value = "";
-        }
-        function delMsg(key) { if(confirm("Message delete karein?")) db.ref('messages/' + key).remove(); }
-        function addFriend() { 
-            const fMail = e('friend-email').value; if(!fMail) return;
-            db.ref('users/' + auth.currentUser.uid + '/friends').push(fMail);
-            alert("Friend added successfully!"); e('friend-email').value = "";
+        function showTestInterstitial() {
+            unityAds.show('Interstitial_Android');
         }
 
-        // UTILS
-        function switchTab(t) {
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active-content'));
-            document.querySelectorAll('.tab').forEach(c => c.classList.remove('active-tab'));
-            e('content-' + t).classList.add('active-content');
-            e('tab-' + t).classList.add('active-tab');
+        function logout() {
+            auth.signOut().then(() => location.reload());
         }
-        function logout() { auth.signOut().then(() => location.reload()); }
-        function e(id) { return document.getElementById(id); }
     </script>
 </body>
 </html>
