@@ -3,142 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Culture Pro - Official</title>
-    
+    <title>MC Wallet & Chat Pro</title>
     <script src="https://cdn.unityads.unity3d.com/sdk/4.0.0/unityads.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        body { background-color: #000; color: #FFD700; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { background: #000; color: #FFD700; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .app-container { background: #111; border: 2px solid #FFD700; border-radius: 20px; width: 350px; height: 600px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 25px #b8860b; }
-        
-        /* Auth Section */
-        #auth-section { padding: 30px; text-align: center; margin-top: 50px; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #FFD700; background: #222; color: #fff; }
-        .btn { background: linear-gradient(45deg, #FFD700, #b8860b); color: #000; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
-        /* Main App Section */
-        #main-app { display: none; height: 100%; flex-direction: column; }
+        #auth-section, #main-app { padding: 20px; display: none; flex-direction: column; height: 100%; }
+        .active { display: flex !important; }
+        input { width: 90%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #FFD700; background: #222; color: #fff; }
+        .btn { background: linear-gradient(45deg, #FFD700, #b8860b); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .tabs { display: flex; background: #222; border-bottom: 1px solid #FFD700; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; }
-        .tab.active { background: #FFD700; color: #000; }
-        .content { flex: 1; padding: 20px; overflow-y: auto; display: none; }
-        .content.active { display: block; }
-
-        /* Chat Styles */
-        #chat-box { height: 250px; background: #000; border: 1px solid #333; border-radius: 10px; margin-bottom: 10px; padding: 10px; overflow-y: scroll; text-align: left; font-size: 14px; }
-        .msg { margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px; }
-        .msg b { color: #FFD700; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; }
+        .tab.active-tab { background: #FFD700; color: #000; font-weight: bold; }
+        .content { flex: 1; overflow-y: auto; display: none; padding: 15px; }
+        .show { display: block !important; }
+        .chat-box { height: 280px; background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; overflow-y: auto; margin-bottom: 10px; }
+        .msg { position: relative; margin-bottom: 10px; padding: 8px; background: #1a1a1a; border-radius: 5px; }
+        .del-btn { color: red; font-size: 10px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        <div id="auth-section">
-            <h2>MC LOGIN</h2>
-            <input type="email" id="email" placeholder="Email Address">
+        <div id="auth-section" class="active">
+            <h2 style="text-align:center">MC PRO LOGIN</h2>
+            <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Password">
             <button class="btn" onclick="login()">LOGIN</button>
-            <button class="btn" style="background:none; color:#FFD700; border:1px solid #FFD700;" onclick="register()">REGISTER</button>
+            <button class="btn" style="background:none; color:#FFD700; border:1px solid #FFD700" onclick="register()">REGISTER</button>
         </div>
 
         <div id="main-app">
             <div class="tabs">
-                <div class="tab active" onclick="openTab('wallet')">WALLET</div>
-                <div class="tab" onclick="openTab('messages')">MESSAGES</div>
+                <div class="tab active-tab" id="t1" onclick="switchTab('wallet')">WALLET</div>
+                <div class="tab" id="t2" onclick="switchTab('chat')">CHAT</div>
+                <div class="tab" id="t3" onclick="switchTab('friends')">FRIENDS</div>
             </div>
 
-            <div id="wallet" class="content active">
-                <h3>Aapka Balance</h3>
-                <h1 style="font-size: 50px;">₹ <span id="balance">0</span></h1>
-                <button class="btn" onclick="showAd()">WATCH VIDEO & EARN</button>
-                <p style="font-size: 12px; margin-top: 30px; color: #666;">Har video par ₹ 1 milega</p>
+            <div id="wallet" class="content show">
+                <h3>Balance: ₹ <span id="bal">0</span></h3>
+                <button class="btn" onclick="playAd()">WATCH VIDEO & EARN</button>
             </div>
 
-            <div id="messages" class="content">
-                <h3>Global Chat</h3>
-                <div id="chat-box"></div>
-                <input type="text" id="msg-input" placeholder="Type message..." style="width: 70%;">
-                <button class="btn" style="width: 25%; padding: 12px;" onclick="sendMessage()">SEND</button>
+            <div id="chat" class="content">
+                <div id="chat-box" class="chat-box"></div>
+                <input type="text" id="m-input" placeholder="Message..." style="width:70%">
+                <button class="btn" style="width:25%; padding:10px" onclick="sendMsg()">SEND</button>
             </div>
-            
-            <button onclick="logout()" style="background:none; border:none; color:gray; cursor:pointer; margin-bottom:10px;">Logout</button>
+
+            <div id="friends" class="content">
+                <input type="email" id="f-email" placeholder="Friend's Email">
+                <button class="btn" onclick="addFriend()">ADD FRIEND</button>
+                <div id="f-list" style="margin-top:15px"></div>
+                <button onclick="logout()" style="margin-top:50px; background:none; border:none; color:grey">LOGOUT</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // FIREBASE & UNITY SETUP
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
             authDomain: "my-insta-backend.firebaseapp.com",
             databaseURL: "https://my-insta-backend-default-rtdb.firebaseio.com",
             projectId: "my-insta-backend",
             appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const auth = firebase.auth();
         const db = firebase.database();
-        unityAds.init('6078958', true);
+        unityAds.init('6078958', true); // Change 'true' to 'false' for live ads
 
-        // LOGIN/REGISTER
-        function login() {
-            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value)
-                .then(u => loadUserData(u.user.uid)).catch(e => alert(e.message));
-        }
-        function register() {
-            auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value)
-                .then(u => {
-                    db.ref('users/' + u.user.uid).set({ balance: 0, email: u.user.email });
-                    loadUserData(u.user.uid);
-                }).catch(e => alert(e.message));
+        function login() { auth.signInWithEmailAndPassword(e('email').value, e('password').value).then(u => start(u.user.uid)).catch(x => alert(x.message)); }
+        function register() { auth.createUserWithEmailAndPassword(e('email').value, e('password').value).then(u => { db.ref('users/'+u.user.uid).set({email:e('email').value, balance:0}); start(u.user.uid); }).catch(x => alert(x.message)); }
+        
+        function start(uid) {
+            e('auth-section').classList.remove('active'); e('main-app').classList.add('active');
+            db.ref('users/'+uid+'/balance').on('value', s => e('bal').innerText = s.val() || 0);
+            loadChat(); loadFriends(uid);
         }
 
-        // TAB SYSTEM
-        function openTab(tabId) {
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+        function switchTab(t) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('show'));
+            document.querySelectorAll('.tab').forEach(c => c.classList.remove('active-tab'));
+            e(t).classList.add('show');
+            event.currentTarget.classList.add('active-tab');
         }
 
-        // LOAD DATA & CHAT
-        function loadUserData(uid) {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            window.uid = uid;
-            
-            // Sync Balance
-            db.ref('users/' + uid + '/balance').on('value', s => { document.getElementById('balance').innerText = s.val() || 0; });
-            
-            // Sync Messages
+        function playAd() {
+            unityAds.show('Rewarded_Android', { onComplete: () => { db.ref('users/'+auth.currentUser.uid+'/balance').transaction(b => (b||0)+1); alert("+1 Earned!"); } });
+        }
+
+        function sendMsg() {
+            const t = e('m-input').value; if(!t) return;
+            db.ref('messages').push({ u: auth.currentUser.email.split('@')[0], t: t, uid: auth.currentUser.uid });
+            e('m-input').value = "";
+        }
+
+        function loadChat() {
             db.ref('messages').limitToLast(20).on('value', s => {
-                const box = document.getElementById('chat-box');
-                box.innerHTML = "";
-                s.forEach(m => { box.innerHTML += `<div class="msg"><b>${m.val().user}:</b> ${m.val().text}</div>`; });
-                box.scrollTop = box.scrollHeight;
+                let h = ""; s.forEach(m => {
+                    const d = m.val().uid === auth.currentUser.uid ? `<span class="del-btn" onclick="delMsg('${m.key}')">DELETE</span>` : "";
+                    h += `<div class="msg"><b>${m.val().u}:</b> ${m.val().t} ${d}</div>`;
+                });
+                e('chat-box').innerHTML = h; e('chat-box').scrollTop = e('chat-box').scrollHeight;
             });
         }
 
-        // SEND MESSAGE
-        function sendMessage() {
-            const txt = document.getElementById('msg-input').value;
-            if(txt) {
-                db.ref('messages').push({ user: auth.currentUser.email.split('@')[0], text: txt });
-                document.getElementById('msg-input').value = "";
-            }
-        }
-
-        // SHOW AD
-        function showAd() {
-            unityAds.show('Rewarded_Android', {
-                onComplete: () => { db.ref('users/' + window.uid + '/balance').transaction(b => (b || 0) + 1); },
-                onError: (e) => alert("Ad Loading... Refresh or try again!")
-            });
-        }
-
-        function logout() { auth.signOut().then(() => location.reload()); }
+        function delMsg(key) { if(confirm("Delete message?")) db.ref('messages/'+key).remove(); }
+        function addFriend() { db.ref('users/'+auth.currentUser.uid+'/friends').push(e('f-email').value); alert("Added!"); }
+        function loadFriends(uid) { db.ref('users/'+uid+'/friends').on('value', s => { e('f-list').innerHTML = "<h4>Friends:</h4>"; s.forEach(f => e('f-list').innerHTML += `<div>👤 ${f.val()}</div>`); }); }
+        function logout() { auth.signOut().then(()=>location.reload()); }
+        function e(id) { return document.getElementById(id); }
     </script>
 </body>
 </html>
