@@ -1,120 +1,66 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Earning - Testing Phase</title>
-    
+    <title>MC Test</title>
     <script src="https://cdn.unityads.unity3d.com/sdk/4.0.0/unityads.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        body { background: #000; color: #FFD700; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .container { background: #111; border: 2px solid #FFD700; border-radius: 20px; padding: 30px; width: 320px; box-shadow: 0 0 20px #b8860b; text-align: center; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #FFD700; background: #222; color: #fff; outline: none; }
-        .btn { background: linear-gradient(45deg, #FFD700, #b8860b); color: #000; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        #dashboard { display: none; }
-        .balance { font-size: 50px; margin: 20px 0; font-weight: bold; color: #FFD700; }
-        #status { font-size: 12px; color: #666; margin-top: 10px; }
+        body { background: #000; color: #FFD700; text-align: center; font-family: sans-serif; padding-top: 50px; }
+        .box { border: 2px solid #FFD700; padding: 20px; display: inline-block; border-radius: 15px; background: #111; }
+        .btn { background: #FFD700; color: #000; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px; width: 80%; }
+        #auth-div { display: block; }
+        #app-div { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="auth" class="container">
-        <h2 style="letter-spacing: 1px;">MC LOGIN</h2>
-        <p style="font-size: 12px; color: #888;">Testing Mode: ON ✅</p>
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="password" id="password" placeholder="Password">
+    <div id="auth-div" class="box">
+        <h2>MC LOGIN</h2>
+        <input type="email" id="e" placeholder="Email" style="width:80%; padding:10px; margin:5px;"><br>
+        <input type="password" id="p" placeholder="Password" style="width:80%; padding:10px; margin:5px;"><br>
         <button class="btn" onclick="login()">LOGIN</button>
-        <button class="btn" style="background:none; color:#FFD700; border:1px solid #FFD700;" onclick="register()">REGISTER</button>
     </div>
 
-    <div id="dashboard" class="container">
-        <p style="margin: 0; color: #aaa;">Current Balance</p>
-        <div class="balance">₹ <span id="bal">0</span></div>
-        <button class="btn" onclick="showTestVideo()">WATCH TEST VIDEO</button>
-        <button class="btn" style="background:#222; color:#FFD700; border:1px solid #FFD700;" onclick="showTestInterstitial()">TEST FULL SCREEN</button>
-        <div id="status">Waiting for Ads...</div>
-        <button onclick="logout()" style="margin-top:30px; background:none; border:none; color:gray; cursor:pointer; font-size: 12px;">Logout System</button>
+    <div id="app-div" class="box">
+        <h2>Balance: ₹ <span id="bal">0</span></h2>
+        <button class="btn" onclick="showAd()">WATCH TEST VIDEO</button>
     </div>
 
     <script>
-        // --- FIREBASE CONFIG (TANISH MANDLOI) ---
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
-            authDomain: "my-insta-backend.firebaseapp.com",
             databaseURL: "https://my-insta-backend-default-rtdb.firebaseio.com",
-            projectId: "my-insta-backend",
-            appId: "1:955106968523:web:4f038e3f139d1f06ba6c4e"
+            projectId: "my-insta-backend"
         };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
+        firebase.initializeApp(config);
+        
+        // Unity Init - Page load hote hi start
+        unityAds.init('6078958', true);
 
-        // --- UNITY CONFIG (TESTING MODE = TRUE) ---
-        const gameId = '6078958';
-        unityAds.init(gameId, true); // True matlab Test Ads dikhengi
-
-        // AUTH FUNCTIONS
         function login() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(e, p)
-                .then(u => startDashboard(u.user.uid))
-                .catch(err => alert("Login Failed: " + err.message));
+            firebase.auth().signInWithEmailAndPassword(document.getElementById('e').value, document.getElementById('p').value)
+            .then(u => {
+                document.getElementById('auth-div').style.display='none';
+                document.getElementById('app-div').style.display='block';
+                window.uid = u.user.uid;
+                firebase.database().ref('users/'+window.uid+'/balance').on('value', s => {
+                    document.getElementById('bal').innerText = s.val() || 0;
+                });
+            }).catch(err => alert(err.message));
         }
 
-        function register() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.createUserWithEmailAndPassword(e, p)
-                .then(u => {
-                    db.ref('users/' + u.user.uid).set({ balance: 0 });
-                    startDashboard(u.user.uid);
-                })
-                .catch(err => alert("Registration Error: " + err.message));
-        }
-
-        function startDashboard(uid) {
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            window.userUid = uid;
-
-            // Sync Realtime Balance
-            db.ref('users/' + uid + '/balance').on('value', s => {
-                document.getElementById('bal').innerText = s.val() || 0;
-            });
-            
-            document.getElementById('status').innerText = "System Connected. Wait 10s for Ads.";
-        }
-
-        // --- TEST ADS FUNCTIONS ---
-
-        function showTestVideo() {
-            document.getElementById('status').innerText = "Loading Test Video...";
+        function showAd() {
             unityAds.show('Rewarded_Android', {
                 onComplete: () => {
-                    // Test reward update
-                    db.ref('users/' + window.userUid + '/balance').transaction(b => (b || 0) + 1);
-                    document.getElementById('status').innerText = "Test Reward Added! ✅";
+                    firebase.database().ref('users/'+window.uid+'/balance').transaction(b => (b||0)+1);
+                    alert("Reward Added!");
                 },
-                onError: (e) => {
-                    alert("Ad not ready yet. Please wait a few more seconds.");
-                    document.getElementById('status').innerText = "Ad Load Error.";
-                }
+                onError: (e) => alert("Ad not ready yet. Wait 10 seconds.")
             });
-        }
-
-        function showTestInterstitial() {
-            unityAds.show('Interstitial_Android');
-        }
-
-        function logout() {
-            auth.signOut().then(() => location.reload());
         }
     </script>
 </body>
