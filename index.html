@@ -1,67 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-us">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Test</title>
-    <script src="https://cdn.unityads.unity3d.com/sdk/4.0.0/unityads.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body { background: #000; color: #FFD700; text-align: center; font-family: sans-serif; padding-top: 50px; }
-        .box { border: 2px solid #FFD700; padding: 20px; display: inline-block; border-radius: 15px; background: #111; }
-        .btn { background: #FFD700; color: #000; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px; width: 80%; }
-        #auth-div { display: block; }
-        #app-div { display: none; }
-    </style>
+    <meta charset="utf-8">
+    <title>TaskCashWeb | Unity</title>
+    <style>body { padding: 0; margin: 0; background: #000; overflow: hidden; }</style>
 </head>
 <body>
-
-    <div id="auth-div" class="box">
-        <h2>MC LOGIN</h2>
-        <input type="email" id="e" placeholder="Email" style="width:80%; padding:10px; margin:5px;"><br>
-        <input type="password" id="p" placeholder="Password" style="width:80%; padding:10px; margin:5px;"><br>
-        <button class="btn" onclick="login()">LOGIN</button>
+    <div id="unity-container">
+        <canvas id="unity-canvas" width=960 height=600></canvas>
     </div>
 
-    <div id="app-div" class="box">
-        <h2>Balance: ₹ <span id="bal">0</span></h2>
-        <button class="btn" onclick="showAd()">WATCH TEST VIDEO</button>
-    </div>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-global.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-global.js"></script>
 
     <script>
-        const config = {
-            apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
-            databaseURL: "https://my-insta-backend-default-rtdb.firebaseio.com",
-            projectId: "my-insta-backend"
-        };
-        firebase.initializeApp(config);
-        
-        // Unity Init - Page load hote hi start
-        unityAds.init('6078958', true);
+      // TaskCashWeb Configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDEEypOjcHmWga-U2Lw-xshTwXYKYzJp04",
+        authDomain: "taskcashweb-73839467.firebaseapp.com",
+        projectId: "taskcashweb-73839467",
+        storageBucket: "taskcashweb-73839467.appspot.com",
+        messagingSenderId: "955106968523",
+        appId: "1:955106968523:web:02df6c25087d91c1ba6c4e"
+      };
 
-        function login() {
-            firebase.auth().signInWithEmailAndPassword(document.getElementById('e').value, document.getElementById('p').value)
-            .then(u => {
-                document.getElementById('auth-div').style.display='none';
-                document.getElementById('app-div').style.display='block';
-                window.uid = u.user.uid;
-                firebase.database().ref('users/'+window.uid+'/balance').on('value', s => {
-                    document.getElementById('bal').innerText = s.val() || 0;
-                });
-            }).catch(err => alert(err.message));
-        }
+      firebase.initializeApp(firebaseConfig);
+      console.log("TaskCashWeb: Firebase Initialized");
 
-        function showAd() {
-            unityAds.show('Rewarded_Android', {
-                onComplete: () => {
-                    firebase.database().ref('users/'+window.uid+'/balance').transaction(b => (b||0)+1);
-                    alert("Reward Added!");
-                },
-                onError: (e) => alert("Ad not ready yet. Wait 10 seconds.")
-            });
-        }
+      // Unity WebGL Loader
+      var buildUrl = "Build";
+      var script = document.createElement("script");
+      script.src = buildUrl + "/web.loader.js";
+      script.onload = () => {
+        createUnityInstance(document.querySelector("#unity-canvas"), {
+          dataUrl: buildUrl + "/web.data",
+          frameworkUrl: buildUrl + "/web.framework.js",
+          codeUrl: buildUrl + "/web.wasm",
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "TanishMandloi",
+          productName: "TaskCashWeb",
+        });
+      };
+      document.body.appendChild(script);
     </script>
 </body>
 </html>
